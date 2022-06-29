@@ -1,6 +1,7 @@
 ---
 title: "COPREDEX"
-subtitle: "Plan d'analyse"
+subtitle: "Plan d'analyse - V2"
+thanks: "E. Devaux"
 author: "Philippe MICHEL"
 date: "`r format(Sys.Date(),'%d %B %Y')`"
 output:
@@ -26,6 +27,9 @@ output:
     toc: yes
 editor_options:
   chunk_output_type: console
+cite-method: biblatex
+bibliography: stat.bib
+license: "CC BY-SA"
 ---
 
 ```{r setup, include= FALSE}
@@ -59,7 +63,7 @@ library("lubridate")
 
 Ce document ne concerne que l'analyse statistique des données. 
 
-L'analyse sera réalisée en intention de traiter. Le risque $\alpha$ retenu est de 0,05 & la puissance de 0,8.
+L'analyse sera réalisée en per protocole, plus pertinente pour une étude de non-infériorité. Le risque $\alpha$ retenu est de 0,05 & la puissance de 0,8.
 
 ## description de la population
 
@@ -78,48 +82,31 @@ Une comparaison simple entre les deux groupes sera réalisée pour vérifier l'a
 
 La comparaison du nombre de patients décédés sera réalisée par un test de  $\chi 2$ de Dunnett et Gent en unilatéral.
 
-Une analyse des courbes de survie sera réalisée avec comparaison entre les deux groupes par la méthode du LogRank. Si nécessaire un ajustement par un modèle de Cox sera réalisé (sur l'âge ?).
+Une analyse des courbes de survie (Kaplan-Meier) sera réalisée avec comparaison entre les deux groupes par la méthode du LogRank. Si nécessaire un ajustement par un modèle de Cox sera réalisé (sur l'âge ?).
 
 ## Objectifs secondaires
 
 Le grand nombre de paramètres suivis entraîne un trop grand nombre de tests vu la taille de la population. Des choix devront être fait.
 
-### Comparaison du devenir des patients dans les deux groupes 
 
-Une analyse en courbe de suivie sera réalisé entre les deux groupes comprenant comme évènements : 
+### Jours d'oxygénothérapie
 
-- Décès
-- Réhospitalisation
+La comparaison des durées de recours à l'O<sub>2</sub> entre les deux groupes sera faite par un test de Wilcoxon-Mann-Whitney. 
 
-### Evolution des symptômes respiratoires dans les deux groupes
+Un graphique d'évolution des SpO<sub>2</sub> patient par patient (graphique * en fagots*) sera tracé.
 
-Vu le faible nombre de cas il ne va pas être possible faire des comparaison type survie sur tous les critères respiratoires jour après jour.  Un tableau récapitulatif jour par jour présentera les données en médiane & quartiles (SpO2, fréquence respiratoire, température) & pourcentage pour le type de ventilation. 
+### Transferts en réanimation
 
-On étudiera plus particulièrement des données simples :
+La comparaison du nombre de transferts en réaniamtion entre les deux groupes sera faite par un test de Wilcoxon-Mann-Whitney. Une étude par courbes de survie (Kaplan-Meier) sera réalisée en prenant comme évènement le décès ou le transfert en réanimation avec comparaison entre les deux groupes par un test de Log-Rank.
 
-- Durée oxygénothérapie
-- Recours à l'OHD, CPAP ventilation mécanique, ECMO
--
-### Description de la satisfaction des patients à J12 vis-à-vis de la prise du traitement
+### Évolution de la qualité de vie
 
-la satisfaction à J12 sera évaluée sur un questionnaire de Likert puis une comparaison entre les deux groupes par un test de $\chi 2$ sera réalisée. Si certaines classe ont des effectifs trop faibles un regroupement sera effectué. 
+Les évolutions du score EQ5D, de la mobilité, de l'autonomie, des activités courantes, des douleurs ou de l'anxiété seront comparés entre les deux groupes par des tests de $\chi 2$ avec au besoin correction de Yates.
 
-### Comparaison de l’évolution de la qualité de vie entre J1 et J28 entre les groupes de randomisation
-
-Les évolutions du score EQ5D, de la mobilité, de l'autonomie, des activités courantes, des douleurs ou de l'anxiété seront comparés entre les deux groupes par des tests de $\chi 2$.
-
-### Comparaison des évènements et effets indésirables survenues entre J1 et J28 entres les groupes de randomisation
-
-les promoteurs ont prévus la surveillance  de : 
-
-- Nombre de jours d’hospitalisation (hospitalisations pour les personnes en ambulatoires, nombre de jours d’hospitalisation)
-- Nombre de transfert en réanimation/soin intensif
-- Nombre de patients ayant une atteinte organique autres que le poumon (évaluation de la gravité selon le CTCAE) 
--Nombre d’infections liées à un agent pathogène autre que SARS-Cov-2 (évaluation de la gravité selon le CTCAE)
--Fréquences des complications liées à la corticothérapie (diabète, psychose aiguë, ou autres effets indésirables considérés comme liés à la corticothérapie par l’investigateur
-
-Il est impossible de réalisé tous ces tests.
-
-## Évènements indésirables
+### Évènements & effets indésirables
+ Les effets indésirables seront listés. Une comparaison simple du nombre d'EI entre les deux groupes sera réalisée par un test de $\chi 2$ avec au besoin correction de Yates.
  
- Les évènements indésirables retenus seront simplement listés. 
+## Technique {.appendix}
+
+L'analyse statistique sera réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier `tidyverse` [@tidy] & `epiDisplay` [@epid].
+

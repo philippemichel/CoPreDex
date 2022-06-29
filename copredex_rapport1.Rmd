@@ -1,0 +1,129 @@
+---
+title: "CoPreDex"
+subtitle: "Rapport Statistique 1"
+thanks: "Dr Édouard DEVAUX - Médecine interne"
+author: "Philippe MICHEL"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  word_document:
+    toc: yes
+  pdf_document:
+    latex_engine: lualatex
+    toc: yes
+    number_sections: no
+    keep_tex: yes
+    df_print: kable
+    highlight: tango
+documentclass: scrartcl
+mainfont: Adobe Garamond Pro
+mainfontoptions:
+- Ligatures = Common
+- Ligatures = Rare
+- Style = Swash
+sansfont: Trajan Pro
+monofont: Source Sans Pro
+mathfont: Source Sans Pro
+monofontoptions: Numbers = Monospaced
+mathfontoptions: Numbers = Monospaced
+colorlinks: yes
+fontsize: 10pt
+papersize: a4
+lang: fr
+lof: yes
+lot: yes
+cite-method: biblatex
+bibliography: stat.bib
+license: CC BY-SA
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE) 
+```
+
+```{r lib}
+library(forcats)
+library(Hmisc)
+library(baseph)
+library(tidyverse)
+library(knitr)
+library(epiDisplay)
+library(kableExtra)
+library(gtsummary)
+library(ggsci)
+library(lme4)
+library(lmerTest)
+library(lubridate)
+```
+
+```{r import}
+tt <- debutph("data/demog.csv")
+titre <- debutph("data/code_inclusion.csv")
+tt$siteid <- as.factor(tt$siteid)
+tt$inclimc <-  bmiph(tt$inclimc, lang ="eng") 
+tt$symptdebdte <- dmy(tt$symptdebdte)
+tt$diagdte <- dmy(tt$diagdte)
+tt$incldte <- dmy(tt$incldte)
+tt$oxygenaebdte <- dmy(tt$oxygenaebdte)
+#
+titre.demog <- titre$nom
+names(titre.demog) <- titre$code
+```
+
+## Description de la population
+
+L'échantillon comprends `r nrow(tt)` cas pour `r ncol(tt)` variables.
+
+
+```{r desc, echo = FALSE}
+dm <- c(2,5,6,8,21) # Variables démographiques
+#
+tabcph(tt[,-dm], tri = ttnom1, nomv = titre.demog[-dm])
+```
+
+Il n'y a pas de différence visible entre les deux groupes concernant les variables démographiques ou à l'inclusion (clinique ou biologique). La différence sur les "`antécédents autres`" est discutable : variable imprécise, pas de "Non" bien défini.
+
+```{r pyr, fig.cap="Pyramide des âges"}
+epiDisplay::pyramid(
+  age = tt$age,
+  sex = tt$sex,
+  binwidth = 10,
+  col.gender = c("pink", "skyblue1"),
+  main = "Pyramide des âges",
+  printTable = FALSE
+)
+```
+
+## Critère principal
+
+```{r princi1}
+rep <- c(1,6:8) # Variables démographiques
+#
+# tbl_summary(tt[, rep], by = trt) |>
+#   add_p() |>
+#   modify_spanning_header(c("stat_1", "stat_2") ~ "traitement") |>
+#   modify_caption("Tableau comparatif") |>
+#   bold_labels() |>
+#   add_overall() %>%
+#   bold_p() |>
+#   as_kable_extra(escape = FALSE,
+#                  booktabs = TRUE,
+#                  longtable = TRUE) %>%
+#   kableExtra::kable_styling(position = "center",
+#                             latex_options = c("repeat_header"))
+```
+
+## Critères secondaires
+
+### Critère secondaire 1
+
+### Critère secondaire 2
+
+### Critère secondaire 3
+
+### Critère secondaire 4
+
+## Technique
