@@ -1,0 +1,248 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={COPREDEX},
+  pdfauthor={Philippe MICHEL},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newlength{\cslentryspacingunit} % times entry-spacing
+\setlength{\cslentryspacingunit}{\parskip}
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+  \let\oldpar\par
+  \def\par{\hangindent=\cslhangindent\oldpar}
+  \fi
+  % set entry spacing
+  \setlength{\parskip}{#2\cslentryspacingunit}
+ }%
+ {}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{rotating}
+\usepackage{array}
+\usepackage[output-decimal-marker={,}]{siunitx}
+\usepackage[french]{varioref}
+\usepackage{}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{frenchpro}
+%
+\hypersetup{%
+colorlinks=true,
+pdfauthor={Philippe MICHEL},
+unicode
+}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{COPREDEX\thanks{E. Devaux}}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Plan d'analyse - V2}
+\author{Philippe MICHEL}
+\date{10 mai 2022}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+Ce document ne concerne que l'analyse statistique des données.
+
+L'analyse sera réalisée en per protocole, plus pertinente pour une étude
+de non-infériorité. Le risque \(\alpha\) retenu est de 0,05 \& la
+puissance de 0,8.
+
+\hypertarget{description-de-la-population}{%
+\subsection{description de la
+population}\label{description-de-la-population}}
+
+La description de la population concerne les données recueillies à
+l'inclusion :
+
+\begin{itemize}
+\tightlist
+\item
+  Clinique
+\item
+  Biologie
+\item
+  Score EQ5D
+\end{itemize}
+
+Une comparaison simple entre les deux groupes sera réalisée pour
+vérifier l'absence de différence gênante : test du \(\chi 2\) pour les
+données catégorielles \& test de Student pour les données numériques
+après vérification de l'égalité des variances.
+
+\hypertarget{objectif-principal}{%
+\subsection{Objectif principal}\label{objectif-principal}}
+
+\textbf{Évaluation de la mortalité à J28}
+
+La comparaison du nombre de patients décédés sera réalisée par un test
+de \(\chi 2\) de Dunnett et Gent en unilatéral.
+
+Une analyse des courbes de survie (Kaplan-Meier) sera réalisée avec
+comparaison entre les deux groupes par la méthode du LogRank. Si
+nécessaire un ajustement par un modèle de Cox sera réalisé (sur l'âge
+?).
+
+\hypertarget{objectifs-secondaires}{%
+\subsection{Objectifs secondaires}\label{objectifs-secondaires}}
+
+Le grand nombre de paramètres suivis entraîne un trop grand nombre de
+tests vu la taille de la population. Des choix devront être fait.
+
+\hypertarget{jours-doxyguxe9nothuxe9rapie}{%
+\subsubsection{Jours
+d'oxygénothérapie}\label{jours-doxyguxe9nothuxe9rapie}}
+
+La comparaison des durées de recours à l'O2 entre les deux groupes sera
+faite par un test de Wilcoxon-Mann-Whitney.
+
+Un graphique d'évolution des SpO2 patient par patient (graphique * en
+fagots*) sera tracé.
+
+\hypertarget{transferts-en-ruxe9animation}{%
+\subsubsection{Transferts en
+réanimation}\label{transferts-en-ruxe9animation}}
+
+La comparaison du nombre de transferts en réaniamtion entre les deux
+groupes sera faite par un test de Wilcoxon-Mann-Whitney. Une étude par
+courbes de survie (Kaplan-Meier) sera réalisée en prenant comme
+évènement le décès ou le transfert en réanimation avec comparaison entre
+les deux groupes par un test de Log-Rank.
+
+\hypertarget{uxe9volution-de-la-qualituxe9-de-vie}{%
+\subsubsection{Évolution de la qualité de
+vie}\label{uxe9volution-de-la-qualituxe9-de-vie}}
+
+Les évolutions du score EQ5D, de la mobilité, de l'autonomie, des
+activités courantes, des douleurs ou de l'anxiété seront comparés entre
+les deux groupes par des tests de \(\chi 2\) avec au besoin correction
+de Yates.
+
+\hypertarget{uxe9vuxe8nements-effets-induxe9sirables}{%
+\subsubsection{Évènements \& effets
+indésirables}\label{uxe9vuxe8nements-effets-induxe9sirables}}
+
+Les effets indésirables seront listés. Une comparaison simple du nombre
+d'EI entre les deux groupes sera réalisée par un test de \(\chi 2\) avec
+au besoin correction de Yates.
+
+\hypertarget{technique}{%
+\subsection{Technique}\label{technique}}
+
+L'analyse statistique sera réalisée avec le logiciel \textbf{R} (R Core
+Team 2022) \& diverses librairies en particulier \texttt{tidyverse}
+(Wickham et al. 2019) \& \texttt{epiDisplay} (Chongsuvivatwong 2018).
+
+\hypertarget{refs}{}
+\begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-epid}{}}%
+Chongsuvivatwong, Virasakdi. 2018. \emph{epiDisplay: Epidemiological
+Data Display Package}.
+\url{https://CRAN.R-project.org/package=epiDisplay}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-rstat}{}}%
+R Core Team. 2022. \emph{R: A Language and Environment for Statistical
+Computing}. Vienna, Austria: R Foundation for Statistical Computing.
+\url{https://www.R-project.org/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-tidy}{}}%
+Wickham, Hadley, Mara Averick, Jennifer Bryan, Winston Chang, Lucy
+D'Agostino McGowan, Romain François, Garrett Grolemund, et al. 2019.
+{``Welcome to the {tidyverse}.''} \emph{Journal of Open Source Software}
+4 (43): 1686. \url{https://doi.org/10.21105/joss.01686}.
+
+\end{CSLReferences}
+
+\end{document}

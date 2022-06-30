@@ -1,0 +1,158 @@
+\hypertarget{copredex}{%
+\section{COPREDEX}\label{copredex}}
+
+\hypertarget{plan-danalyse---v2}{%
+\subsection{Plan d'analyse - V2}\label{plan-danalyse---v2}}
+
+\hypertarget{philippe-michel}{%
+\subsubsection{Philippe MICHEL}\label{philippe-michel}}
+
+\hypertarget{mai-2022}{%
+\subsubsection{10 mai 2022}\label{mai-2022}}
+
+\hypertarget{TOC}{}
+\begin{itemize}
+\tightlist
+\item
+  \protect\hyperlink{description-de-la-population}{description de la
+  population}
+\item
+  \protect\hyperlink{objectif-principal}{Objectif principal}
+\item
+  \protect\hyperlink{objectifs-secondaires}{Objectifs secondaires}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \protect\hyperlink{jours-doxyguxe9nothuxe9rapie}{Jours
+    d'oxygénothérapie}
+  \item
+    \protect\hyperlink{transferts-en-ruxe9animation}{Transferts en
+    réanimation}
+  \item
+    \protect\hyperlink{uxe9volution-de-la-qualituxe9-de-vie}{Évolution
+    de la qualité de vie}
+  \item
+    \protect\hyperlink{uxe9vuxe8nements-effets-induxe9sirables}{Évènements
+    \& effets indésirables}
+  \end{itemize}
+\item
+  \protect\hyperlink{technique}{Technique}
+\end{itemize}
+
+\hypertarget{content-wrapper}{}
+\leavevmode\hypertarget{main-content}{}%
+Ce document ne concerne que l'analyse statistique des données.
+
+L'analyse sera réalisée en per protocole, plus pertinente pour une étude
+de non-infériorité. Le risque
+{\textbackslash(\textbackslash alpha\textbackslash)} retenu est de 0,05
+\& la puissance de 0,8.
+
+\hypertarget{description-de-la-population}{%
+\subsection{description de la
+population}\label{description-de-la-population}}
+
+La description de la population concerne les données recueillies à
+l'inclusion :
+
+\begin{itemize}
+\tightlist
+\item
+  Clinique
+\item
+  Biologie
+\item
+  Score EQ5D
+\end{itemize}
+
+Une comparaison simple entre les deux groupes sera réalisée pour
+vérifier l'absence de différence gênante : test du
+{\textbackslash(\textbackslash chi 2\textbackslash)} pour les données
+catégorielles \& test de Student pour les données numériques après
+vérification de l'égalité des variances.
+
+\hypertarget{objectif-principal}{%
+\subsection{Objectif principal}\label{objectif-principal}}
+
+\textbf{Évaluation de la mortalité à J28}
+
+La comparaison du nombre de patients décédés sera réalisée par un test
+de {\textbackslash(\textbackslash chi 2\textbackslash)} de Dunnett et
+Gent en unilatéral.
+
+Une analyse des courbes de survie (Kaplan-Meier) sera réalisée avec
+comparaison entre les deux groupes par la méthode du LogRank. Si
+nécessaire un ajustement par un modèle de Cox sera réalisé (sur l'âge
+?).
+
+\hypertarget{objectifs-secondaires}{%
+\subsection{Objectifs secondaires}\label{objectifs-secondaires}}
+
+Le grand nombre de paramètres suivis entraîne un trop grand nombre de
+tests vu la taille de la population. Des choix devront être fait.
+
+\hypertarget{jours-doxyguxe9nothuxe9rapie}{%
+\subsubsection{Jours
+d'oxygénothérapie}\label{jours-doxyguxe9nothuxe9rapie}}
+
+La comparaison des durées de recours à l'O\textsubscript{2} entre les
+deux groupes sera faite par un test de Wilcoxon-Mann-Whitney.
+
+Un graphique d'évolution des SpO\textsubscript{2} patient par patient
+(graphique * en fagots*) sera tracé.
+
+\hypertarget{transferts-en-ruxe9animation}{%
+\subsubsection{Transferts en
+réanimation}\label{transferts-en-ruxe9animation}}
+
+La comparaison du nombre de transferts en réaniamtion entre les deux
+groupes sera faite par un test de Wilcoxon-Mann-Whitney. Une étude par
+courbes de survie (Kaplan-Meier) sera réalisée en prenant comme
+évènement le décès ou le transfert en réanimation avec comparaison entre
+les deux groupes par un test de Log-Rank.
+
+\hypertarget{uxe9volution-de-la-qualituxe9-de-vie}{%
+\subsubsection{Évolution de la qualité de
+vie}\label{uxe9volution-de-la-qualituxe9-de-vie}}
+
+Les évolutions du score EQ5D, de la mobilité, de l'autonomie, des
+activités courantes, des douleurs ou de l'anxiété seront comparés entre
+les deux groupes par des tests de {\textbackslash(\textbackslash chi
+2\textbackslash)} avec au besoin correction de Yates.
+
+\hypertarget{uxe9vuxe8nements-effets-induxe9sirables}{%
+\subsubsection{Évènements \& effets
+indésirables}\label{uxe9vuxe8nements-effets-induxe9sirables}}
+
+Les effets indésirables seront listés. Une comparaison simple du nombre
+d'EI entre les deux groupes sera réalisée par un test de
+{\textbackslash(\textbackslash chi 2\textbackslash)} avec au besoin
+correction de Yates.
+
+\hypertarget{technique}{%
+\subsection{Technique}\label{technique}}
+
+L'analyse statistique sera réalisée avec le logiciel \textbf{R} {(R Core
+Team 2022)} \& diverses librairies en particulier \texttt{tidyverse}
+{(Wickham et al. 2019)} \& \texttt{epiDisplay} {(Chongsuvivatwong
+2018)}.
+
+\hypertarget{refs}{}
+\begin{cslreferences}
+\hypertarget{ref-epid}{}
+Chongsuvivatwong, Virasakdi. 2018. \emph{epiDisplay: Epidemiological
+Data Display Package}.
+\url{https://CRAN.R-project.org/package=epiDisplay}.
+
+\hypertarget{ref-rstat}{}
+R Core Team. 2022. \emph{R: A Language and Environment for Statistical
+Computing}. Vienna, Austria: R Foundation for Statistical Computing.
+\url{https://www.R-project.org/}.
+
+\hypertarget{ref-tidy}{}
+Wickham, Hadley, Mara Averick, Jennifer Bryan, Winston Chang, Lucy
+D'Agostino McGowan, Romain François, Garrett Grolemund, et al. 2019.
+{``Welcome to the {tidyverse}.''} \emph{Journal of Open Source Software}
+4 (43): 1686. \url{https://doi.org/10.21105/joss.01686}.
+\end{cslreferences}

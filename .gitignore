@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+*.pdf
+/data/
+/doc/
+*.bib
+tete.tex  
