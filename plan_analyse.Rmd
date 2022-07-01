@@ -1,0 +1,112 @@
+---
+title: "COPREDEX"
+subtitle: "Plan d'analyse - V2"
+thanks: "E. Devaux"
+author: "Philippe MICHEL"
+date: "`r format(Sys.Date(),'%d %B %Y')`"
+output:
+  pdf_document:
+    includes:
+      in_header: tete.tex
+    keep_tex: yes
+    latex_engine: lualatex
+    toc: yes  
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: 
+        collapsed: false
+    theme: lumen
+    anchor_sections: TRUE
+  html_notebook:
+    fig_caption: yes
+    theme: spacelab
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+    toc: yes
+editor_options:
+  chunk_output_type: console
+cite-method: biblatex
+bibliography: stat.bib
+license: "CC BY-SA"
+---
+
+```{r setup, include= FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE,
+# knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+#
+ fig.width = 7,
+ fig.asp = 0.8,
+ out.width = "100%"
+)
+```
+
+```{r info}
+rm(list=ls())
+library("prettydoc")
+library("forcats")
+library("epiDisplay")
+library("factoextra")
+library("baseph")
+library("knitr")
+library("finalfit")
+library("Hmisc")
+library("xtable")
+library("viridis")
+library("stringr")
+library("ggplot2")
+library("kableExtra")
+library("lubridate")
+# sessionInfo()
+```
+
+Ce document ne concerne que l'analyse statistique des données. 
+
+L'analyse sera réalisée en per protocole, plus pertinente pour une étude de non-infériorité. Le risque $\alpha$ retenu est de 0,05 & la puissance de 0,8.
+
+## description de la population
+
+La description de la population concerne les données recueillies à l'inclusion :
+
+- Clinique
+- Biologie
+- Score EQ5D
+
+Une comparaison simple entre les deux groupes sera réalisée pour vérifier l'absence de différence gênante : test du $\chi 2$ pour les données catégorielles & test de Student pour les données numériques après vérification de l'égalité des variances. 
+
+
+## Objectif principal
+
+**Évaluation de la mortalité à J28** 
+
+La comparaison du nombre de patients décédés sera réalisée par un test de  $\chi 2$ de Dunnett et Gent en unilatéral.
+
+Une analyse des courbes de survie (Kaplan-Meier) sera réalisée avec comparaison entre les deux groupes par la méthode du LogRank. Si nécessaire un ajustement par un modèle de Cox sera réalisé (sur l'âge ?).
+
+## Objectifs secondaires
+
+Le grand nombre de paramètres suivis entraîne un trop grand nombre de tests vu la taille de la population. Des choix devront être fait.
+
+
+### Jours d'oxygénothérapie
+
+La comparaison des durées de recours à l'O<sub>2</sub> entre les deux groupes sera faite par un test de Wilcoxon-Mann-Whitney. 
+
+Un graphique d'évolution des SpO<sub>2</sub> patient par patient (graphique * en fagots*) sera tracé.
+
+### Transferts en réanimation
+
+La comparaison du nombre de transferts en réaniamtion entre les deux groupes sera faite par un test de Wilcoxon-Mann-Whitney. Une étude par courbes de survie (Kaplan-Meier) sera réalisée en prenant comme évènement le décès ou le transfert en réanimation avec comparaison entre les deux groupes par un test de Log-Rank.
+
+### Évolution de la qualité de vie
+
+Les évolutions du score EQ5D, de la mobilité, de l'autonomie, des activités courantes, des douleurs ou de l'anxiété seront comparés entre les deux groupes par des tests de $\chi 2$ avec au besoin correction de Yates.
+
+### Évènements & effets indésirables
+ Les effets indésirables seront listés. Une comparaison simple du nombre d'EI entre les deux groupes sera réalisée par un test de $\chi 2$ avec au besoin correction de Yates.
+ 
+## Technique {.appendix}
+
+L'analyse statistique sera réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier `tidyverse` [@tidy] & `epiDisplay` [@epid].
+
