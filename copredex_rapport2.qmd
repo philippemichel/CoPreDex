@@ -1,0 +1,516 @@
+---
+title: "CoPreDex"
+subtitle: "Rapport Statistique -- V1.4"
+author: 
+    - name: "Dr Philippe MICHEL"
+      affiliations:
+        name: "Hôpital NOVO"
+        department: "Unité de Soutien à la Recherche Clinique"
+    - name:  "Dr Édouard DEVAUD"
+      affiliations:
+        name: "Hôpital NOVO"
+        department: "Médecine interne -- Site Pontoise"
+lang: fr-FR
+date: today
+date-format: "DD/MM/YYYY"
+format: 
+  titlepage-pdf:
+    titlepage: bg-image
+    titlepage-bg-image: "novo_usrc.png"
+    logo-space-after: "0\\baselineskip"
+    documentclass: scrreprt
+    classoption: ["oneside", "open=any"]
+    number-sections: true
+    titlepage-footer: "Comparaison de la Prednisolone et de la Dexaméthasone sur la mortalité à J28 chez des patients sous oxygénothérapie, atteints de la CoViD-19\\newline Étude multicentrique, randomisée, de non-infériorité en ouvert"
+titlepage-theme:
+    title-fontstyle: ["Huge", "bfseries"]
+    title-color: novo
+    subtitle-color: novo
+    subtitle-fontstyle: ["huge"]
+    logo-size: "0.2\\textheight"
+    vrule-width: "0.1cm"
+    vrule-color: novo
+include-in-header:
+      text: |
+        \definecolor{novo}{HTML}{27484b}
+jss-pdf:
+    keep-tex: true   
+pdf-engine: lualatex
+keep-tex: true
+number-sections: true
+toc: true
+lof: true
+lot: true
+mainfont: Faune
+mainfontoptions:
+  - Numbers=OldStyle
+  - Ligatures=TeX
+sansfont: Myriad Pro
+sansfontoptions:
+  - Ligatures=TeX
+fig-cap-location: bottom
+tbl-cap-location: top
+classoption: [french]
+papersize: a4paper
+editor: source
+bibliography: stat.bib
+cite-method: biblatex
+csl: jama.csl
+#reference-location: margin
+#citation-location: margin
+license: "CC BY-SA"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE) 
+```
+
+```{r}
+#| label: lib
+
+library(baseph)
+library(janitor)
+library(corrplot)
+library(tidyverse)
+library(lubridate)
+library(labelled)
+library(kableExtra)
+library(forestmodel)
+library(epiDisplay)
+library(confintr)
+library(colorspace)
+library(DataExplorer)
+library(gtsummary)
+library(xlsx)
+library(survminer)
+```
+
+```{r}
+#| label: import
+
+dd <- read_csv("data/code_inclusion.csv")
+bnom <- dd$nom
+tt <- debutph("data/demog.csv", bnom)
+#
+tt$siteid <- as.factor(tt$siteid)
+tt$inclimc <-  bmiph(tt$inclimc, lang ="eng") 
+var_label(tt$inclimc) <- "BMI"
+tt$symptdebdte <- dmy(tt$symptdebdte)
+tt$diagdte <- dmy(tt$diagdte)
+tt$incldte <- dmy(tt$incldte)
+tt$finetdte <- dmy(tt$finetdte)
+tt$oxygenaebdte <- dmy(tt$oxygenaebdte)
+tt$survie <- as.numeric(tt$finetdte-tt$incldte)
+#
+titre.demog <- bnom
+#
+ttn <- tibble(tt$patid,tt$ttnom1)
+names(ttn) <- c("subjid", "traitement")
+```
+
+```{r}
+#| label: ittpp
+aa <- tt |> 
+dplyr::filter(tt$dcdon == "Oui")
+aa <- aa$patid
+pp <- read_csv("data/data2/exclus_pp.csv") |> 
+  mutate(ID = str_sub(ID,1,6),show_col_types = FALSE)
+pp <-   dplyr::filter(pp,!(pp$ID %in% aa))
+ttz <- tt |> 
+  dplyr::filter(!(tt$patid %in% pp$ID))
+#
+#| label: ittpp
+pp <- read_csv("data/data2/exclus_itt.csv") |> 
+  mutate(ID = str_sub(ID,1,6),show_col_types = FALSE)
+ttitt <- ttz |> 
+  dplyr::filter(!(patid %in% pp$ID), show_col_types = FALSE)
+tt <- ttz
+```
+
+
+Il s'agit d'une étude en non-infériorité comparant deux groupes. Pour ce type de design l'analyse est réalisée en per-protocole. Dans cet échantillon il n'y a pas eu de changement de bras pendant l'étude. La marge de non-infériorité considérée comme admissible a été fixée à 15 %.
+
+## Description de la population
+
+En analyse per-protocole, l'échantillon comprends `r nrow(tt)` cas  pour `r ncol(tt)` variables au total. 
+
+```{r}
+#| label: desc
+#| tbl-cap: Description de la population
+
+tt |> 
+  select(c(3,4,7,9,10,12:19,21:33) ) |> 
+  tbl_summary(by = ttnom1, missing = "no") |> 
+  modify_header(label ~ " ") |>
+  add_p() |> 
+  add_n() |> 
+  bold_labels() |> 
+    as_kable_extra(booktabs = TRUE) |> 
+  kable_styling(latex_options = c( "HOLD_position"))
+
+```
+
+Il n'y a pas de différence visible entre les deux groupes concernant les variables démographiques ou à l'inclusion (clinique ou biologique). La différence sur les "`antécédents autres`" est discutable : variable imprécise, pas de "Non" bien défini.
+
+```{r}
+#| label: pyr
+#| fig-cap: "Pyramide des âges"
+epiDisplay::pyramid(
+    age = tt$age,
+    sex = tt$sex,
+    binwidth = 10,
+    col.gender = c("pink", "skyblue1"),
+    main = "Pyramide des âges",
+    printTable = FALSE
+)
+```
+
+## Critère principal
+**Évaluation de la mortalité à J28**
+
+```{r}
+#| label: princi1
+#| tbl-cap: Survie selon le traitement
+tt |>
+    tbl_cross(
+        ttnom1,
+        dcdon,
+        percent = "row",
+        label = list(ttnom1 ~ "Traitement", dcdon ~ "Décédé")
+    ) |>
+    bold_labels() |>
+    as_kable_extra(escape = FALSE,
+                   booktabs = TRUE,
+                   longtable = TRUE) %>%
+    kableExtra::kable_styling(position = "center",
+                              latex_options = c("repeat_header", "HOLD_position"))
+
+
+```
+
+Le test du $\chi^2$ de Dunnet & Gent n'est pas utilisable en raison des trop faibles effectifs. Aucun facteur correctif n’est validé pour ce test. 
+
+### Risque relatif
+Le résultat est présenté ici en Risque relatif. 
+
+```{r}
+#| label: risquerelatif
+#| tbl-cap: Risque relatif
+
+cs(tt$dcdon,tt$ttnom1)
+```
+
+Il n'y a pas de différence significative (exprimée en risque relatif *Risk ratio*). Le nombre de patients à traiter (*NNT*) n'est pas exploitable vu le trop grand intervalle de confiance.
+
+### Courbes de survie
+
+```{r}
+#| label: survie
+#| fig-cap: "Courbes de survie"
+ddcd <- tt$dcdon == "Oui"
+ssurv <- Surv(tt$survie, ddcd)
+fsurv <- survfit(ssurv~tt$ttnom1)
+ggsurvplot(fsurv, data = tt,
+            size = 1,                 # change line size
+  palette =
+    c("#E7B800", "#2E9FDF"),# custom color palettes
+  conf.int = TRUE,          # Add confidence interval
+  pval = TRUE,              # Add p-value
+  risk.table = TRUE,        # Add risk table
+  risk.table.col = "strata",
+  xlim = c(0,28),
+  ylim = c(0.7,1),
+   break.time.by = 7,  
+  xlab = "jours",
+  legend.labs =
+    c("Dexaméthasone", "Prednisolone"),    # Change legend labels
+  ggtheme = theme_light() )
+```
+
+Les effectifs sont trop faibles pour un test de Log-Rank afin de comparer les deux courbes. 
+
+### analyse en équivalence
+
+
+```{r}
+#| label: itt1
+#| tbl-cap: Analyse en intention de traiter
+
+zz <- fisher.test(ttitt$dcdon,ttitt$ttnom1)
+```
+
+On réalise une analyse en équivalence  en intention de traiter afin de valider l'analyse principale. Le test de fisher retrouve un p = `r beaup(zz$p.value)`. 
+
+```{r}
+#| label: itt2
+#| tbl-cap: Analyse en intention de traiter - OR
+
+cc(ttitt$dcdon,ttitt$ttnom1)
+```
+
+
+### Autres facteurs
+
+```{r}
+#| label: fact1
+#| tbl-cap: Facteurs influants la survie
+
+tt |> 
+  select(c(3,4,7,9,10,12:16,18:19,21,35) ) |> 
+  tbl_summary(by = dcdon, missing = "no") |> 
+  modify_header(label ~ " ") |>
+  add_p() |> 
+  add_n() |> 
+  bold_labels() |> 
+    as_kable_extra(booktabs = TRUE) |> 
+  kable_styling(latex_options = c( "HOLD_position"))
+```
+
+```{r}
+#| label: age
+#| fig-cap: "Décès selon l'âge"
+tt |>
+    ggplot() +
+    aes(x = dcdon, y = age, fill = dcdon) +
+    geom_violin() +
+    geom_boxplot(width = 0.2, fill = "white") +
+    labs(
+        title = "Décès selon l'âge",
+        subtitle = "p = 0,09",
+        x = "Décès",
+        y = "ans",
+        caption = "Décès selon l'âge",
+        label = "imf1"
+    ) +
+    theme_light() +
+    scale_fill_discrete_qualitative(palette = "Dynamic") +
+    theme(
+        plot.title = element_text(size = 16, face = "bold"),
+        plot.subtitle = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        legend.title = element_blank(),
+        axis.title.y = element_text(
+            size = 12,
+            hjust = 0.5,
+            angle = 90
+        ),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.position = "none"
+    )
+```
+
+
+### Analyse multivariée
+
+```{r}
+#| label: multi1
+#| tbl-cap: Facteurs de risque - Analyse multivariée
+glm(dcdon ~ ttnom1++age + incldiab,
+    data = tt,
+    family = "quasibinomial") |>
+    tbl_regression(exponentiate = TRUE) |>
+    bold_p() %>%
+    bold_labels() |>
+    as_kable_extra(escape = FALSE,
+                   booktabs = TRUE) %>%
+    kableExtra::kable_styling(position = "center", latex_options = c( "HOLD_position"))
+```
+
+L'âge & le diabète de type 2 semblent être des facteurs pronostics de la COVID mais pas le type de corticoïde utilisé.
+
+## Critères secondaires
+
+### Jours d’oxygénothérapie
+
+```{r}
+#| label: o2import
+noo <- read_csv("data/oxyg.csv")
+noo <- names(noo)
+oo <- debutph("data/oxyg.csv",noo)
+oo$pararespidte <- dmy(oo$pararespidte)
+oo <- right_join(oo, ttn, by = "subjid")
+#
+oon <- oo |>
+    # dplyr::filter(ventilation != "ventilé") |>
+    group_by(subjid) |>
+    dplyr::filter(debitmesure > 0) |>
+    count(subjid) |>
+    right_join(ttn, by = "subjid")
+zz <- wilcox.test(oon$n ~ oon$traitement)
+zzp <- beaup(zz$p.value, affp=1)
+```
+
+```{r}
+#| label: figoo1
+#| fig-cap: "Durée d'oxygénothérapie selon le traitement suivi"
+oon |>
+    ggplot() +
+    aes(x = traitement, y = n, fill = traitement) +
+    geom_violin() +
+    geom_boxplot(width = 0.2, fill = "grey90") +
+    labs(
+        title = "Durée d'oxygénothérapie selon le traitement suivi",
+        subtitle = zzp,
+        x = "Traitement",
+        y = "jours",
+        caption = "Durée d'oxygénothérapie selon le traitement suivi",
+        label = "oo1"
+    ) +
+    theme_light() +
+    scale_fill_discrete_qualitative(palette = "Dynamic") +
+    theme(
+        plot.title = element_text(size = 16, face = "bold"),
+        plot.subtitle = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        legend.title = element_blank(),
+        axis.title.y = element_text(
+            size = 12,
+            hjust = 0.5,
+            angle = 90
+        ),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.position = "none"
+    )
+```
+
+Il n'y a pas de différence visible entre les deux groupes - `r zzp`.
+
+```{r fagoto}
+oof <- oo |> 
+    group_by(subjid) |> 
+    mutate(njour = (pararespidte-min(pararespidte))) |> 
+    select(c(1,7,12))
+
+ooa <- oof |> 
+    pivot_wider(names_from = njour, values_from = ventil,values_fn = list)
+```
+
+
+### Transferts en réanimation
+
+```{r}
+#| label: rea1
+#| tbl-cap: Séjour en réanimation selon le traitement
+
+nvi <- read_csv("data/viste2.csv")
+nvi <- names(nvi)
+vi2 <- debutph("data/viste2.csv", nvi)
+vi2 <- right_join(vi2, ttn, by = "subjid")
+#
+vi2$rea <-
+    as.factor(ifelse(vi2$reajnbre > 0, "Réanimation", "Pas de réanimation"))
+
+vi2 |>
+    tbl_cross(
+        traitement,
+        rea,
+        percent = "row",
+        label = list(traitement ~ "Traitement", rea ~ "Prise en charge")
+    ) |>
+    bold_labels() |>
+    add_p() |> 
+    as_kable_extra(escape = FALSE,
+                   booktabs = TRUE) %>%
+    kableExtra::kable_styling(position = "center", latex_options = c( "HOLD_position"))
+
+```
+
+```{r}
+#| label: grea
+#| fig-cap: Séjour en réanimation selon le traitement
+barouiph(vi2,
+         rea,
+         traitement,
+         "Réanimation",
+         titre = "Séjour en réanimation selon le traitement",
+         capt = "Séjour en réanimation selon le traitement")
+```
+
+
+### Évolution de la qualité de vie
+
+Le score EQ5D ne peut être utilisé car il est incomplet (il manque l'EVS). On utilise donc un score maison en prenant les 5 valeurs de l'EQ5D cotées chacunes de 1 à 3, 3 étant le plus grave. 
+
+```{r}
+#| label: eq5d1
+#| fig-cap: EQ5D bis début & fin d'étude
+neq <- read_csv("data/EQ5D.csv")
+neq <- names(neq)
+eq <- debutph("data/EQ5D.csv", neq)
+eq <- right_join(eq, ttn, by = "subjid")
+#
+eq$tot <- eq$e1 + eq$e2 + eq$e3 + eq$e4 + eq$e5
+leq <- length(na.omit(eq$tot))
+zz <- wilcox.test(eq$tot~eq$visit)
+zzp <- beaup(zz$p.value)
+
+eq |>
+    ggplot() +
+    aes(x = visit, y = tot, fill = visit) +
+    geom_violin() +
+    geom_boxplot(width = 0.15, fill = "grey90") +
+    labs(
+        title = "EQ5D bis début & fin d'étude",
+        subtitle = "p < 0,001",
+        x = "Visite",
+        y = "EQ5D bis",
+        caption = "EQ5D bis début & fin d'étude",
+        label = "eq1"
+    ) +
+    theme_light() +
+      scale_fill_discrete_qualitative(palette = "Dynamic") +
+    theme(
+        plot.title = element_text(size = 16, face = "bold"),
+        plot.subtitle = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        legend.title = element_blank(),
+        axis.title.y = element_text(
+            size = 12,
+            hjust = 0.5,
+            angle = 90
+        ),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.position = "none"
+    )
+```
+### Rôle du traitement
+
+On étudie l'évolution du score entre J0 & J28 selon le traitement reçu.
+
+```{r}
+#| label: evoeq
+
+eqv <- eq[,c(1,2,13,14)]
+names(eqv) <- names(eq)[c(1,2,13,14)]
+eqv <- pivot_wider(eqv,names_from = visit,values_from =tot)
+names(eqv)[4] <- "visite2"
+eqv$dif <- eqv$visite2 - eqv$INCLUSION
+leqv <- length(na.omit(eqv$dif))
+zz <- wilcox.test(eqv$dif~eqv$traitement)
+zzp <- beaup(zz$p.value)
+```
+
+le calcul porte sur `r leqv` patients. Il ne semble pas y avoir d'effet du traitement sur l'évolution du score (`r zzp`).
+
+
+### Évènements & effets indésirables
+Trois atteintes rénales & une atteinte cutanée ont été notées.
+
+
+
+## Technique {.appendix}
+
+Les données discrètes ont été présentés en pourcentage puis comparées par un test exact de Fisher. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon. 
+
+L'analyse multivarié a été menée en régression logistique. Les conditions d'utilisation d'une loi binomiale (distribution normale des résidus) n'étant pas remplies une loi quasi-binomiale a été utilisée. 
+
+La survie à 28 jours a été évaluée par un test du $\chi^2$ de Dunnet & Gent [@dunnet] en unilatéral plus adapté à une analyse de non infériorité.
+
+Les survie ont été calculées par la méthode de Kaplan-Meyer puis  un test non-paramétrique du Log-rank en unilatéral a été tenté.
+
+Pour l'analyse multivariée,  dans un premier temps on incorpore dans l'analyse multivariée tous les facteurs ayant une p-value < 20 %. Ensuite on recherche le meilleur modèle par un step-by-step descendant.
+
+L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `epiDisplay` [@epid].
