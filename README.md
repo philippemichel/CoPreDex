@@ -8,6 +8,7 @@ Ce dépôt ne contient que les scripts **R** utilisés mais pas les données ou 
 
 ## Fichiers
 **plan_analyse** proposition de plan d'analyse
+**Rapport2** Rapport statistique final 
 
 
 ## Critere secondaires
