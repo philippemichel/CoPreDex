@@ -1,11 +1,20 @@
 ---
 title: "COPREDEX"
+<<<<<<< HEAD
 subtitle: "Plan d'analyse - V3"
+=======
+subtitle: "Plan d'analyse - V2"
+>>>>>>> 93a947c72dd989a809763adbf25b788a885862ab
 thanks: "E. Devaux"
 author: "Philippe MICHEL"
 date: "`r format(Sys.Date(),'%d %B %Y')`"
 output:
   pdf_document:
+<<<<<<< HEAD
+=======
+    includes:
+      in_header: tete.tex
+>>>>>>> 93a947c72dd989a809763adbf25b788a885862ab
     keep_tex: yes
     latex_engine: lualatex
     toc: yes  
@@ -63,8 +72,11 @@ Ce document ne concerne que l'analyse statistique des données.
 
 L'analyse sera réalisée en per protocole, plus pertinente pour une étude de non-infériorité. Le risque $\alpha$ retenu est de 0,05 & la puissance de 0,8.
 
+<<<<<<< HEAD
 Vu les effectifs prévus l'hypothèse de normalité ne peut pas a priori être retenue & des tests non paramétriques seront utilisés. 
 
+=======
+>>>>>>> 93a947c72dd989a809763adbf25b788a885862ab
 ## description de la population
 
 La description de la population concerne les données recueillies à l'inclusion :
@@ -73,17 +85,25 @@ La description de la population concerne les données recueillies à l'inclusion
 - Biologie
 - Score EQ5D
 
+<<<<<<< HEAD
 Les données discrètes seront présentés en pourcentage puis comparées par un test exact de Fisher. Les données numériques seront présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon. 
 
 
 Une comparaison simple entre les deux groupes sera réalisée pour vérifier l'absence de différence gênante : test du $\chi 2$ pour les données catégorielles & test de Wilcoxon pour les données numériques après vérification de l'égalité des variances. 
+=======
+Une comparaison simple entre les deux groupes sera réalisée pour vérifier l'absence de différence gênante : test du $\chi 2$ pour les données catégorielles & test de Student pour les données numériques après vérification de l'égalité des variances. 
+>>>>>>> 93a947c72dd989a809763adbf25b788a885862ab
 
 
 ## Objectif principal
 
 **Évaluation de la mortalité à J28** 
 
+<<<<<<< HEAD
 La comparaison du nombre de patients décédés sera réalisée par un test de  $\chi 2$ de Dunnett et Gent en unilatéral. Une comparaison simple en intention de traiter sera réalisée par un test exact de Fisher.
+=======
+La comparaison du nombre de patients décédés sera réalisée par un test de  $\chi 2$ de Dunnett et Gent en unilatéral.
+>>>>>>> 93a947c72dd989a809763adbf25b788a885862ab
 
 Une analyse des courbes de survie (Kaplan-Meier) sera réalisée avec comparaison entre les deux groupes par la méthode du LogRank. Si nécessaire un ajustement par un modèle de Cox sera réalisé (sur l'âge ?).
 
@@ -100,16 +120,28 @@ Un graphique d'évolution des SpO<sub>2</sub> patient par patient (graphique * e
 
 ### Transferts en réanimation
 
+<<<<<<< HEAD
 La comparaison du nombre de transferts en réanimation entre les deux groupes sera faite par un test de Wilcoxon-Mann-Whitney. Une étude par courbes de survie (Kaplan-Meier) sera réalisée en prenant comme évènement le décès ou le transfert en réanimation avec comparaison entre les deux groupes par un test de Log-Rank après vérification des conditions d'emploi.
+=======
+La comparaison du nombre de transferts en réaniamtion entre les deux groupes sera faite par un test de Wilcoxon-Mann-Whitney. Une étude par courbes de survie (Kaplan-Meier) sera réalisée en prenant comme évènement le décès ou le transfert en réanimation avec comparaison entre les deux groupes par un test de Log-Rank.
+>>>>>>> 93a947c72dd989a809763adbf25b788a885862ab
 
 ### Évolution de la qualité de vie
 
 Les évolutions du score EQ5D, de la mobilité, de l'autonomie, des activités courantes, des douleurs ou de l'anxiété seront comparés entre les deux groupes par des tests de $\chi 2$ avec au besoin correction de Yates.
 
 ### Évènements & effets indésirables
+<<<<<<< HEAD
  Les effets indésirables seront listés. Une comparaison simple du nombre d'EI entre les deux groupes sera réalisée par un test exact de Fisher.
  
 ## Technique {.appendix}
 
 L'analyse statistique sera réalisée avec le logiciel **R** [@rstat]  & diverses librairies en particulier celles du `tidyverse` [@tidy], `epiDisplay` [@epid] & `baseph` [@baseph].
+=======
+ Les effets indésirables seront listés. Une comparaison simple du nombre d'EI entre les deux groupes sera réalisée par un test de $\chi 2$ avec au besoin correction de Yates.
+ 
+## Technique {.appendix}
+
+L'analyse statistique sera réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier `tidyverse` [@tidy] & `epiDisplay` [@epid].
+>>>>>>> 93a947c72dd989a809763adbf25b788a885862ab
 
