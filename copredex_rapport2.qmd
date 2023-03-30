@@ -6,10 +6,6 @@ author:
       affiliations:
         name: "Hôpital NOVO"
         department: "Unité de Soutien à la Recherche Clinique"
-    - name:  "Dr Édouard DEVAUD"
-      affiliations:
-        name: "Hôpital NOVO"
-        department: "Médecine interne -- Site Pontoise"
 lang: fr-FR
 date: today
 date-format: "DD/MM/YYYY"
@@ -21,7 +17,7 @@ format:
     documentclass: scrreprt
     classoption: ["oneside", "open=any"]
     number-sections: true
-    titlepage-footer: "Comparaison de la Prednisolone et de la Dexaméthasone sur la mortalité à J28 chez des patients sous oxygénothérapie, atteints de la CoViD-19\\newline Étude multicentrique, randomisée, de non-infériorité en ouvert"
+    titlepage-footer: "Dr Édouard DEVAUD -- Médecine interne -- Hôpital NOVO (Site Pontoise)\\newline \\newline Comparaison de la Prednisolone et de la Dexaméthasone sur la mortalité à J28 chez des patients sous oxygénothérapie, atteints de la CoViD-19\\newline Étude multicentrique, randomisée, de non-infériorité en ouvert"
 titlepage-theme:
     title-fontstyle: ["Huge", "bfseries"]
     title-color: novo
@@ -63,6 +59,8 @@ license: "CC BY-SA"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE) 
+expx = FALSE
+classeur <- "copredex1.xls"
 ```
 
 ```{r}
@@ -79,6 +77,7 @@ library(forestmodel)
 library(epiDisplay)
 library(confintr)
 library(colorspace)
+library(finalfit)
 library(DataExplorer)
 library(gtsummary)
 library(xlsx)
@@ -103,7 +102,7 @@ tt$oxygenaebdte <- dmy(tt$oxygenaebdte)
 tt$survie <- as.numeric(tt$finetdte-tt$incldte)
 #
 titre.demog <- bnom
-#
+# 
 ttn <- tibble(tt$patid,tt$ttnom1)
 names(ttn) <- c("subjid", "traitement")
 ```
@@ -120,34 +119,65 @@ ttz <- tt |>
   dplyr::filter(!(tt$patid %in% pp$ID))
 #
 #| label: ittpp
-pp <- read_csv("data/data2/exclus_itt.csv") |> 
+ppi <- read_csv("data/data2/exclus_itt.csv") |> 
   mutate(ID = str_sub(ID,1,6),show_col_types = FALSE)
-ttitt <- ttz |> 
-  dplyr::filter(!(patid %in% pp$ID), show_col_types = FALSE)
+ttitt <- tt |> 
+  dplyr::filter(!(tt$patid %in% ppi$ID))
 tt <- ttz
 ```
 
+## Généralité 
 
 Il s'agit d'une étude en non-infériorité comparant deux groupes. Pour ce type de design l'analyse est réalisée en per-protocole. Dans cet échantillon il n'y a pas eu de changement de bras pendant l'étude. La marge de non-infériorité considérée comme admissible a été fixée à 15 %.
+
+En raison du faible nombre de cas & en particulier du faible nombre de décès les tests prévus en non-infériorité n'ont pu être réalisés. 
 
 ## Description de la population
 
 En analyse per-protocole, l'échantillon comprends `r nrow(tt)` cas  pour `r ncol(tt)` variables au total. 
 
 ```{r}
-#| label: desc
-#| tbl-cap: Description de la population
+#| label: desc1
+#| tbl-cap: Description de la population -- clinique
 
 tt |> 
-  select(c(3,4,7,9,10,12:19,21:33) ) |> 
+  select(c(3,4,7,9,10,12,18,19,21:22) ) |> 
   tbl_summary(by = ttnom1, missing = "no") |> 
   modify_header(label ~ " ") |>
   add_p() |> 
   add_n() |> 
   bold_labels() |> 
-    as_kable_extra(booktabs = TRUE) |> 
-  kable_styling(latex_options = c( "HOLD_position"))
+  exptabph(lg = FALSE, exp = expx, nomfich = classeur, nomsheet = "descclin")
 
+```
+
+
+```{r}
+#| label: desc2
+#| tbl-cap: Description de la population -- antécédents
+
+tt |> 
+  select(c(22,13:17) ) |> 
+  tbl_summary(by = ttnom1, missing = "no") |> 
+  modify_header(label ~ " ") |>
+  add_p() |> 
+  add_n() |> 
+  bold_labels() |> 
+  exptabph(lg = FALSE, exp = expx, nomfich = classeur, nomsheet = "descatcd")
+```
+
+```{r}
+#| label: desc3
+#| tbl-cap: Description de la population -- Biologie
+
+tt |> 
+  select(c(22,23:33) ) |> 
+  tbl_summary(by = ttnom1, missing = "no") |> 
+  modify_header(label ~ " ") |>
+  add_p() |> 
+  add_n() |> 
+  bold_labels() |> 
+  exptabph(lg = FALSE, exp = expx, nomfich = classeur, nomsheet = "descbio")
 ```
 
 Il n'y a pas de différence visible entre les deux groupes concernant les variables démographiques ou à l'inclusion (clinique ou biologique). La différence sur les "`antécédents autres`" est discutable : variable imprécise, pas de "Non" bien défini.
@@ -179,13 +209,7 @@ tt |>
         label = list(ttnom1 ~ "Traitement", dcdon ~ "Décédé")
     ) |>
     bold_labels() |>
-    as_kable_extra(escape = FALSE,
-                   booktabs = TRUE,
-                   longtable = TRUE) %>%
-    kableExtra::kable_styling(position = "center",
-                              latex_options = c("repeat_header", "HOLD_position"))
-
-
+   exptabph(exp = expx, nomfich = classeur, nomsheet = "survie1")
 ```
 
 Le test du $\chi^2$ de Dunnet & Gent n'est pas utilisable en raison des trop faibles effectifs. Aucun facteur correctif n’est validé pour ce test. 
@@ -253,7 +277,7 @@ cc(ttitt$dcdon,ttitt$ttnom1)
 
 ```{r}
 #| label: fact1
-#| tbl-cap: Facteurs influants la survie
+#| tbl-cap: Facteurs pouvant influer sur la survie
 
 tt |> 
   select(c(3,4,7,9,10,12:16,18:19,21,35) ) |> 
@@ -262,8 +286,7 @@ tt |>
   add_p() |> 
   add_n() |> 
   bold_labels() |> 
-    as_kable_extra(booktabs = TRUE) |> 
-  kable_styling(latex_options = c( "HOLD_position"))
+  exptabph(exp = expx, nomfich = classeur, nomsheet = "fact1")
 ```
 
 ```{r}
@@ -312,9 +335,7 @@ glm(dcdon ~ ttnom1++age + incldiab,
     tbl_regression(exponentiate = TRUE) |>
     bold_p() %>%
     bold_labels() |>
-    as_kable_extra(escape = FALSE,
-                   booktabs = TRUE) %>%
-    kableExtra::kable_styling(position = "center", latex_options = c( "HOLD_position"))
+   exptabph(exp = expx, nomfich = classeur, nomsheet = "multiv")
 ```
 
 L'âge & le diabète de type 2 semblent être des facteurs pronostics de la COVID mais pas le type de corticoïde utilisé.
@@ -411,9 +432,7 @@ vi2 |>
     ) |>
     bold_labels() |>
     add_p() |> 
-    as_kable_extra(escape = FALSE,
-                   booktabs = TRUE) %>%
-    kableExtra::kable_styling(position = "center", latex_options = c( "HOLD_position"))
+   exptabph(exp = expx, nomfich = classeur, nomsheet = "rea")
 
 ```
 
@@ -496,21 +515,109 @@ zzp <- beaup(zz$p.value)
 le calcul porte sur `r leqv` patients. Il ne semble pas y avoir d'effet du traitement sur l'évolution du score (`r zzp`).
 
 
-### Évènements & effets indésirables
-Trois atteintes rénales & une atteinte cutanée ont été notées.
+## Évènements & effets indésirables
+
+```{r}
+#| label: ind1
+
+ind <- read_csv("data/data2/EI.csv") |> 
+  mutate_if(is.character, as.factor) |>
+    janitor::clean_names()
+nnei <- read_csv("data/data2/einom.csv")
+nnei <- nnei$nom
+
+var_label(ind) <- nnei
+ind <- right_join(ind,tt, by = join_by(id == patid)) |> 
+  drop_na(ei_nom)
+#
+## Réordonnancement de ind$eiintens
+ind$eiintens <- ind$eiintens %>%
+  fct_relevel(
+    "Légère", "Modérée", "Sévère", "Menace le pronostic vital",
+    "Décès"
+  )
+## Réordonnancement de ind$eicausa
+ind$eicausa <- ind$eicausa %>%
+  fct_relevel(
+    "Non liée", "Possible", "Probable", "Liée"
+  )
+## Réordonnancement de ind$eiact
+ind$eiact <- ind$eiact %>%
+  fct_relevel(
+    "Aucune", "Surveillance", "Traitement correcteur", "Autre"
+  )
+## Réordonnancement de ind$evolei
+ind$evolei <- ind$evolei %>%
+  fct_relevel(
+    "Guérison sans séquelle", "Guérison avec séquelles", "Non encore rétabli",
+    "Aggravation", "Décès", "Inconnue"
+  )
+```
+
+### Description
+
+```{r}
+#| label: ein
+#| tbl-cap: Nombre d'EI selon le traitement
+
+ind |>
+  select(ttnom1) |>
+  tbl_summary(missing = "no") |>
+  modify_header(label ~ " ") |>
+  bold_labels() |>
+  add_ci() |>
+  exptabph(exp = expx, nomfich = classeur, nomsheet = "nbei")
+```
+
+```{r}
+#| label: ein2
+#| tbl-cap: Patients présentant au moins un EI 
+
+nind <- unique (ind$id)
+nind <- factor(nind)
+tt$ei <- ifelse(tt$patid %in% nind, "Oui", "Non")
+var_label(tt$ei) <- "Évènements idésirables"
+tt |> 
+  tbl_cross(ei,ttnom1, percent = "column") |> 
+  add_p() |> 
+  bold_labels() |> 
+    exptabph(exp = expx, nomfich = classeur, nomsheet = "patei")
+```
+
+Il y a eu `r nrow(ind)` effets indésirables reportés concernant `r length(nind)` patients.
+
+Il n'y pas de différence sur le nombre d'effets indésirables entre les deux traitements.
 
 
+```{r}è
+#| label: table1
+#| tbl-cap: Évenements indésirables - Description
 
-## Technique {.appendix}
+ind |> 
+  select(c(2:7,28)) |> 
+  tbl_summary(by = ttnom1,missing = "no") |> 
+  modify_header(label ~ " ") |>
+  bold_labels() |> 
+  add_n() |> 
+  add_p() |> 
+  exptabph(exp = expx, nomfich = classeur, nomsheet = "ei1")
+```
+
+Il y a un patient décédé dans le groupe"prednisolone" non pris en compte dans le critère principal car décédé après J28. 
+
+œ&## Technique {.appendix}
+
+
+Il s'agit d'une étude en non-infériorité comparant deux groupes. Pour ce type de design l'analyse est réalisée en per-protocole. Le critère principal a aussi été évalué en intention de traiter pour valider le résultat. Dans cet échantillon il n'y a pas eu de changement de bras pendant l'étude. La marge de non-infériorité considérée comme admissible a été fixée à 15 %.
 
 Les données discrètes ont été présentés en pourcentage puis comparées par un test exact de Fisher. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon. 
 
 L'analyse multivarié a été menée en régression logistique. Les conditions d'utilisation d'une loi binomiale (distribution normale des résidus) n'étant pas remplies une loi quasi-binomiale a été utilisée. 
 
-La survie à 28 jours a été évaluée par un test du $\chi^2$ de Dunnet & Gent [@dunnet] en unilatéral plus adapté à une analyse de non infériorité.
+L'analyse de la survie à 28 jours aurai du être évaluée par un test du $\chi^2$ de Dunnet & Gent [@dunnett] en unilatéral mais  qui n'a pu être réalisé en raison des faibles effectifs. 
 
-Les survie ont été calculées par la méthode de Kaplan-Meyer puis  un test non-paramétrique du Log-rank en unilatéral a été tenté.
+Les survie ont été calculées par la méthode de Kaplan-Meyer. Le test non-paramétrique du Log-rank en unilatéral n'a pu être réalisé en raison des faibles effectifs.
 
 Pour l'analyse multivariée,  dans un premier temps on incorpore dans l'analyse multivariée tous les facteurs ayant une p-value < 20 %. Ensuite on recherche le meilleur modèle par un step-by-step descendant.
 
-L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `epiDisplay` [@epid].
+L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy], `epiDisplay` [@epid] & `baseph` [@baseph].
