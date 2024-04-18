@@ -1,0 +1,413 @@
+---
+title: "CoPreDex"
+subtitle: "Rapport Statistique -- Compléments in english"
+author: 
+    - name: "Dr Philippe MICHEL"
+      affiliations:
+        name: "Hôpital NOVO"
+        department: "Unité de Soutien à la Recherche Clinique"
+date: "30 mars 2023"
+lang: fr
+format: 
+  titlepage-pdf:
+    titlepage: bg-image
+    titlepage-bg-image: "novo_usrc.png"
+    logo-space-after: "0\\baselineskip"
+    documentclass: scrreprt
+    classoption: ["oneside", "open=any"]
+    number-sections: true
+    titlepage-footer: "Dr Édouard DEVAUD -- Médecine interne -- Hôpital NOVO (Site Pontoise)\\newline \\newline Comparaison de la Prednisolone et de la Dexaméthasone sur la mortalité à J28 chez des patients sous oxygénothérapie, atteints de la CoViD-19\\newline Étude multicentrique, randomisée, de non-infériorité en ouvert"
+titlepage-theme:
+    title-fontstyle: ["Huge", "bfseries"]
+    title-color: novo
+    subtitle-color: novo
+    subtitle-fontstyle: ["huge"]
+    logo-size: "0.2\\textheight"
+    vrule-width: "0.1cm"
+    vrule-color: novo
+include-in-header:
+      text: |
+        \definecolor{novo}{HTML}{27484b}
+jss-pdf:
+    keep-tex: true   
+pdf-engine: lualatex
+keep-tex: true
+number-sections: true
+toc: true
+lof: true
+lot: true
+mainfont: Faune
+mainfontoptions:
+  - Numbers=OldStyle
+  - Ligatures=TeX
+sansfont: Myriad Pro
+sansfontoptions:
+  - Ligatures=TeX
+fig-cap-location: bottom
+tbl-cap-location: top
+classoption: [french]
+papersize: a4paper
+editor: source
+bibliography: stat.bib
+cite-method: biblatex
+csl: jama.csl
+#reference-location: margin
+#citation-location: margin
+license: "MIT"
+echo: false
+warning: false
+message: false
+cache: false
+---
+
+
+```{r}
+#| label: lib
+
+library(baseph)
+library(janitor)
+library(corrplot)
+library(tidyverse)
+library(lubridate)
+library(labelled)
+library(kableExtra)
+library(forestmodel)
+library(epiDisplay)
+library(forestmodel)
+library(confintr)
+library(colorspace)
+library(finalfit)
+library(DataExplorer)
+library(gtsummary)
+library(xlsx)
+library(readODS)
+library(survminer)
+#
+# En français
+#
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+theme_gtsummary_journal(journal = "jama")
+options(OutDec = ",")
+#
+# Export xls
+#
+expx = TRUE
+classeur <- "copredex-comp1.xls"
+if (expx){
+  zz <- paste("rm -f ", classeur)
+  system(zz)
+}
+```
+ 
+```{r}
+#| label: import
+
+dd <- read_delim("data/code_inclusion.csv", delim = ",")
+bnom <- dd$nom
+tt <- read_csv("data/demog.csv") |> 
+  clean_names() |> 
+  mutate_if(is.character, as.factor) 
+  var_label(tt) <- bnom
+#
+tt$siteid <- as.factor(tt$siteid)
+tt$inclimc <-  bmiph(tt$inclimc, lang ="eng") 
+var_label(tt$inclimc) <- "BMI"
+tt$symptdebdte <- dmy(tt$symptdebdte)
+tt$diagdte <- dmy(tt$diagdte)
+tt$incldte <- dmy(tt$incldte)
+tt$finetdte <- dmy(tt$finetdte)
+tt$oxygenaebdte <- dmy(tt$oxygenaebdte)
+tt$survie <- as.numeric(tt$finetdte-tt$incldte)
+#
+titre.demog <- bnom
+# 
+ttn <- tibble(tt$patid,tt$ttnom1)
+names(ttn) <- c("subjid", "traitement")
+#
+#----------
+#
+vi2 <- read_ods("data/VISIT2.ods")|> 
+  janitor::clean_names() |> 
+  mutate(rea = ifelse(reajnbre > 0, "Réanimation", "Pas de réanimation")) |> 
+  mutate_if(is.character, as.factor) |> 
+  right_join(ttn, by = "subjid")
+```
+
+```{r}
+#| label: ittpp
+aa <- tt |> 
+dplyr::filter(tt$dcdon == "Oui")
+aa <- aa$patid
+pp <- read_csv("data/data2/exclus_pp.csv") |> 
+  mutate(ID = str_sub(ID,1,6),show_col_types = FALSE)
+pp <-   dplyr::filter(pp,!(pp$ID %in% aa))
+ttz <- tt |> 
+  dplyr::filter(!(tt$patid %in% pp$ID))
+#
+#| label: ittpp
+ppi <- read_csv("data/data2/exclus_itt.csv") |> 
+  mutate(ID = str_sub(ID,1,6),show_col_types = FALSE)
+ttitt <- tt |> 
+  dplyr::filter(!(tt$patid %in% ppi$ID))
+tt <- ttz
+```
+
+
+# Âge, HTA, sexe & poids & diabète
+
+On étudie ici la survie à 28 jours en fonction du traitement & de plusieurs facteurs démographiques qui pourraient avoir un impact sur la survie mais aussi des interactions entre eux. 
+
+On ne retrouve pas de facteur confondant parmi ces variables. Une éventuelle interaction entre les variables démographique a été éliminée.
+
+
+
+
+
+
+```{r}
+#| label: tbl-agesexe2
+#| tbl-cap: "confounding demographic factors and 28-day survival"
+
+glm(dcdon ~ ttnom1 + sex + age + inclimc + inclhta + incldiab, data = tt, family = "binomial") |> 
+  tbl_regression(exponentiate = TRUE) |>
+  bold_p() |>
+  bold_labels() |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "agesexe")
+```
+
+
+
+
+
+# Courbes de survie
+
+```{r}
+#| label: fig-survie
+#| fig-cap: "Survival curves"
+#| fig-asp: 1
+ddcd <- tt$dcdon == "Oui"
+ssurv <- Surv(tt$survie, ddcd)
+fsurv <- survfit(ssurv~tt$ttnom1)
+ggsurvplot(fsurv, data = tt,
+            size = 1,                 # change line size
+  palette =
+    c("#E7B800", "#2E9FDF"),# custom color palettes
+  conf.int = TRUE,          # Add confidence interval
+  pval = FALSE,              # Add p-value
+  risk.table = TRUE,        # Add risk table
+  risk.table.col = "strata",
+  xlim = c(0,28),
+  ylim = c(0,1),
+   break.time.by = 7,  
+  xlab = "Days",
+  legend.labs =
+    c("Dexamethasone", "Prednisolone"),    # Change legend labels
+  ggtheme = theme_light() )
+```
+
+## Survie à 21 jours
+
+```{r}
+#| label: fig-survx
+#| fig-cap: "21 Day Survival"
+
+barouiph(tt, dcdon, ttnom1, "Non", "Survival at 21 days")
+```
+
+
+# Critères secondaires
+
+## Jours d’oxygénothérapie & d'hospitalsation
+
+```{r}
+#| label: o2import
+noo <- read_csv("data/oxyg.csv")
+noo <- names(noo)
+oo <- read_delim("data/oxyg.csv",delim = ";", show_col_types = FALSE) |> 
+  mutate_if(is.character, as.factor) |>
+  janitor::clean_names()
+oo$pararespidte <- dmy(oo$pararespidte)
+oo <- right_join(oo, ttn, by = "subjid")
+#
+oon <- oo |>
+    # dplyr::filter(ventilation != "ventilé") |>
+    group_by(subjid) |>
+    dplyr::filter(debitmesure > 0) |>
+    count(subjid) |>
+    right_join(ttn, by = "subjid")
+zz <- wilcox.test(oon$n ~ oon$traitement)
+zzp <- beaup(zz$p.value, affp=1)
+```
+
+```{r}
+#| label: fig-jhosp
+#| fig-cap: "length of hospital stay"
+
+zz <- t.test(vi2$hospijnbre~vi2$traitement, var.equal = TRUE)
+zz <- beaup(zz$p.value,affp = 1)
+vi2 |> 
+vioboxph(traitement,hospijnbre,
+  titre = "Length of hospital stay",
+  stit = zz,
+  tity= "Days"
+)
+```
+
+
+
+```{r}
+#| label: fig-oo1
+#| fig-cap: "Duration of oxygen therapy"
+oon |>
+    ggplot() +
+    aes(x = traitement, y = n, fill = traitement) +
+    geom_violin() +
+    geom_boxplot(width = 0.2, fill = "grey90") +
+    labs(title = "Duration of oxygen therapy",
+        x = "Treatment",
+        y = "Days"
+    ) +
+    theme_light() +
+    scale_fill_discrete_qualitative(palette = "Dynamic") +
+    theme(
+        plot.title = element_text(size = 16, face = "bold"),
+        plot.subtitle = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        legend.title = element_blank(),
+        axis.title.y = element_text(
+            size = 12,
+            hjust = 0.5,
+            angle = 90
+        ),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.position = "none"
+    )
+```
+
+
+
+
+## Évolution de la qualité de vie
+
+Le score EQ5D ne peut être utilisé car il est incomplet (il manque l'EVS). On utilise donc un score maison en prenant les 5 valeurs de l'EQ5D cotées chacune de 0 à 2, 2 étant le moins grave. Le score total varie donc de 50 à 10.
+
+```{r}
+#| label: eq5dpre
+
+neq <- read_ods("data/EQ5D.ods", na = c("Nd", "NA", "")) |> 
+    mutate_if(is.character, as.factor) |>
+    janitor::clean_names()
+eq <- right_join(neq, ttn, by = "subjid")
+## Recodage de eq$eq5d1 en eq$d1
+eq$d1 <- eq$eq5d1 %>%
+  fct_recode(
+    "2" = "J’ai des problèmes pour me déplacer à pied.",
+    "3" = "Je n’ai aucun problème pour me déplacer à pied.",
+    "1" = "Je suis obligé(e) de rester alité(e)."
+  )
+eq$d1 <- as.numeric(as.character(eq$d1))
+## Recodage de eq$eq5d2 en eq$d2
+eq$d2 <- eq$eq5d2 %>%
+  fct_recode(
+    "2" = "J’ai des problèmes pour me laver ou m’habiller tout(e) seul(e).",
+    "3" = "Je n’ai aucun problème pour prendre soin de moi.",
+    "1" = "Je suis incapable de me laver ou de m’habiller tout(e) seul(e)."
+  ) %>%
+  as.character() %>%
+  as.numeric()
+## Recodage de eq$eq5d3 en eq$d3
+eq$d3 <- eq$eq5d3 %>%
+  fct_recode(
+    "2" = "J’ai des problèmes pour accomplir mes activités courantes.",
+    "3" = "Je n’ai aucun problème pour accomplir mes activités courantes.",
+    "1" = "Je suis incapable d’accomplir mes activités courantes."
+  ) %>%
+  as.character() %>%
+  as.numeric()
+## Recodage de eq$eq5d4 en eq$d4
+eq$d4 <- eq$eq5d4 %>%
+  fct_recode(
+    "1" = "J’ai des douleurs ou une gêne extrême(s).",
+    "2" = "J’ai des douleurs ou une gêne modérée(s).",
+    "3" = "Je n’ai ni douleurs ni gêne."
+  ) %>%
+  as.character() %>%
+  as.numeric()
+## Recodage de eq$eq5d5 en eq$d5
+eq$d5 <- eq$eq5d5 %>%
+  fct_recode(
+    "3" = "Je ne suis ni anxieux(se) ni déprimé(e).",
+    "1" = "Je suis extrêmement anxieux(se) ou déprimé(e)",
+    "2" = "Je suis modérément anxieux(se) ou déprimé(e)."
+  ) %>%
+  as.character() %>%
+  as.numeric()
+
+eq$eq5 <- eq$d1 + eq$d2 + eq$d3 + eq$d4 + eq$d5-5
+
+## Recodage de eq$visit
+eq$visit <- eq$visit %>%
+  fct_recode(
+    "Inclusion" = "INCLUSION",
+    "Day 28" = "VISITE 2 (J28)"
+  )
+```
+
+
+```{r}
+#| label: fig-eq5d1
+#| fig-cap: "EQ5Dbis : start & end of study"
+
+
+zz <- eq |> 
+ dplyr::filter(visit == "Inclusion")
+zz <- wilcox.test(eq5~traitement, data = zz)
+zz1 <- beaup(zz$p.value,affp = 1)
+zz <- eq |> 
+ dplyr::filter(visit == "Day 28")
+zz <- wilcox.test(eq5~traitement, data = zz)
+zz2 <- beaup(zz$p.value,affp = 1)
+
+eq |>
+    ggplot() +
+    aes(x = visit, y = eq5, fill = traitement) +
+    geom_boxplot() +
+    geom_segment(x = 0.8 ,xend = 1.2, y  = 12, yend = 12, linewidth = 0.3) +
+  geom_segment(x = 0.8 ,xend = 0.8, y  = 12, yend = 11, linewidth = 0.3) +
+  geom_segment(x = 1.2 ,xend = 1.2, y  = 12, yend = 11, linewidth = 0.3) +
+  annotate("text",  x= 1, y = 13, label = zz1) +
+   geom_segment(x = 1.8 ,xend = 2.2, y  = 12, yend = 12, linewidth = 0.3) +
+  geom_segment(x = 1.8 ,xend = 1.8, y  = 12, yend = 11, linewidth = 0.3) +
+  geom_segment(x = 2.2 ,xend = 2.2, y  = 12, yend = 11, linewidth = 0.3) +
+  annotate("text",  x= 2, y = 13, label = zz2) +
+  geom_segment(x = 1, xend = 2, y  = 15, yend = 15,linewidth = 0.3) +
+  geom_segment(x = 1 ,xend = 1, y  = 14, yend = 15, linewidth = 0.3) +
+  geom_segment(x = 2 ,xend = 2, y  = 14, yend = 15, linewidth = 0.3) +
+  annotate("text", x= 1.5, y= 16, label = zzp) +
+    labs(
+        title = "EQ5Dbis : start & end of study",
+        x = "Visit",
+        y = "EQ5Dbis",
+        fill = "Traitement"
+    ) +
+    theme_light() +
+      scale_fill_discrete_qualitative(palette = "Dynamic") +
+      scale_y_continuous(limits = c(0,21)) +
+    theme(
+        plot.title = element_text(size = 16, face = "bold"),
+        plot.subtitle = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        legend.title = element_blank(),
+        axis.title.y = element_text(
+            size = 12,
+            hjust = 0.5,
+            angle = 90
+        ),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.position = "right"
+    )
+```
+
+

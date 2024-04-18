@@ -5,16 +5,19 @@
 \documentclass[
 ]{article}
 \usepackage{amsmath,amssymb}
-\usepackage{lmodern}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
 \else % if luatex or xetex
-  \usepackage{unicode-math}
+  \usepackage{unicode-math} % this also loads fontspec
   \defaultfontfeatures{Scale=MatchLowercase}
   \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
 \fi
 % Use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -33,14 +36,6 @@
   \KOMAoptions{parskip=half}}
 \makeatother
 \usepackage{xcolor}
-\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
-\hypersetup{
-  pdftitle={COPREDEX},
-  pdfauthor={Philippe MICHEL},
-  hidelinks,
-  pdfcreator={LaTeX via pandoc}}
-\urlstyle{same} % disable monospaced font for URLs
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
 \makeatletter
@@ -82,22 +77,6 @@
 \newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
 \newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
 \newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
-\usepackage{geometry}
-\usepackage{graphicx}
-\usepackage{rotating}
-\usepackage{array}
-\usepackage[output-decimal-marker={,}]{siunitx}
-\usepackage[french]{varioref}
-\usepackage{}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{frenchpro}
-%
-\hypersetup{%
-colorlinks=true,
-pdfauthor={Philippe MICHEL},
-unicode
-}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -115,6 +94,14 @@ unicode
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={COPREDEX},
+  pdfauthor={Philippe MICHEL},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
 
 \title{COPREDEX\thanks{E. Devaux}}
 \usepackage{etoolbox}
@@ -123,9 +110,9 @@ unicode
   \apptocmd{\@title}{\par {\large #1 \par}}{}{}
 }
 \makeatother
-\subtitle{Plan d'analyse - V2}
+\subtitle{Plan d'analyse - V3}
 \author{Philippe MICHEL}
-\date{10 mai 2022}
+\date{22 février 2024}
 
 \begin{document}
 \maketitle
@@ -139,6 +126,9 @@ Ce document ne concerne que l'analyse statistique des données.
 L'analyse sera réalisée en per protocole, plus pertinente pour une étude
 de non-infériorité. Le risque \(\alpha\) retenu est de 0,05 \& la
 puissance de 0,8.
+
+Vu les effectifs prévus l'hypothèse de normalité ne peut pas a priori
+être retenue \& des tests non paramétriques seront utilisés.
 
 \hypertarget{description-de-la-population}{%
 \subsection{description de la
@@ -157,6 +147,16 @@ l'inclusion :
   Score EQ5D
 \end{itemize}
 
+Les données discrètes seront présentés en pourcentage puis comparées par
+un test exact de Fisher. Les données numériques seront présentées par
+leur médiane \& les quartiles puis comparées par le test non
+paramétrique de Wilcoxon.
+
+Une comparaison simple entre les deux groupes sera réalisée pour
+vérifier l'absence de différence gênante : test du \(\chi 2\) pour les
+données catégorielles \& test de Wilcoxon pour les données numériques
+après vérification de l'égalité des variances.
+
 Une comparaison simple entre les deux groupes sera réalisée pour
 vérifier l'absence de différence gênante : test du \(\chi 2\) pour les
 données catégorielles \& test de Student pour les données numériques
@@ -166,6 +166,10 @@ après vérification de l'égalité des variances.
 \subsection{Objectif principal}\label{objectif-principal}}
 
 \textbf{Évaluation de la mortalité à J28}
+
+La comparaison du nombre de patients décédés sera réalisée par un test
+de \(\chi 2\) de Dunnett et Gent en unilatéral. Une comparaison simple
+en intention de traiter sera réalisée par un test exact de Fisher.
 
 La comparaison du nombre de patients décédés sera réalisée par un test
 de \(\chi 2\) de Dunnett et Gent en unilatéral.
@@ -195,6 +199,13 @@ fagots*) sera tracé.
 \subsubsection{Transferts en
 réanimation}\label{transferts-en-ruxe9animation}}
 
+La comparaison du nombre de transferts en réanimation entre les deux
+groupes sera faite par un test de Wilcoxon-Mann-Whitney. Une étude par
+courbes de survie (Kaplan-Meier) sera réalisée en prenant comme
+évènement le décès ou le transfert en réanimation avec comparaison entre
+les deux groupes par un test de Log-Rank après vérification des
+conditions d'emploi.
+
 La comparaison du nombre de transferts en réaniamtion entre les deux
 groupes sera faite par un test de Wilcoxon-Mann-Whitney. Une étude par
 courbes de survie (Kaplan-Meier) sera réalisée en prenant comme
@@ -215,22 +226,31 @@ de Yates.
 indésirables}\label{uxe9vuxe8nements-effets-induxe9sirables}}
 
 Les effets indésirables seront listés. Une comparaison simple du nombre
-d'EI entre les deux groupes sera réalisée par un test de \(\chi 2\) avec
-au besoin correction de Yates.
+d'EI entre les deux groupes sera réalisée par un test exact de Fisher.
 
 \hypertarget{technique}{%
 \subsection{Technique}\label{technique}}
 
 L'analyse statistique sera réalisée avec le logiciel \textbf{R} (R Core
-Team 2022) \& diverses librairies en particulier \texttt{tidyverse}
-(Wickham et al. 2019) \& \texttt{epiDisplay} (Chongsuvivatwong 2018).
+Team 2022) \& diverses librairies en particulier celles du
+\texttt{tidyverse} (Wickham et al. 2019), \texttt{epiDisplay}
+(Chongsuvivatwong 2022) \& \texttt{baseph} (Michel 2023).
+
+Les effets indésirables seront listés. Une comparaison simple du nombre
+d'EI entre les deux groupes sera réalisée par un test de \(\chi 2\) avec
+au besoin correction de Yates.
 
 \hypertarget{refs}{}
 \begin{CSLReferences}{1}{0}
 \leavevmode\vadjust pre{\hypertarget{ref-epid}{}}%
-Chongsuvivatwong, Virasakdi. 2018. \emph{epiDisplay: Epidemiological
+Chongsuvivatwong, Virasakdi. 2022. \emph{epiDisplay: Epidemiological
 Data Display Package}.
 \url{https://CRAN.R-project.org/package=epiDisplay}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-baseph}{}}%
+Michel, Philippe. 2023. \emph{Baseph : Un Package Pour Les Études
+Cliniques Simples}. Pontoise, France.
+\url{https://github.com/philippemichel/baseph}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-rstat}{}}%
 R Core Team. 2022. \emph{R: A Language and Environment for Statistical
@@ -238,10 +258,9 @@ Computing}. Vienna, Austria: R Foundation for Statistical Computing.
 \url{https://www.R-project.org/}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-tidy}{}}%
-Wickham, Hadley, Mara Averick, Jennifer Bryan, Winston Chang, Lucy
-D'Agostino McGowan, Romain François, Garrett Grolemund, et al. 2019.
-{``Welcome to the {tidyverse}.''} \emph{Journal of Open Source Software}
-4 (43): 1686. \url{https://doi.org/10.21105/joss.01686}.
+Wickham, Hadley, Mara Averick, Jennifer Bryan, and al. 2019. {``Welcome
+to the {tidyverse}.''} \emph{Journal of Open Source Software} 4 (43):
+1686. \url{https://doi.org/10.21105/joss.01686}.
 
 \end{CSLReferences}
 

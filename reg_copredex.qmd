@@ -1,0 +1,207 @@
+---
+title: "CoPreDex"
+subtitle: "facteurs de risque"
+language:
+  title-block-author-single: "Auteur"
+author:
+  - name: "Dr Philippe MICHEL"
+    orcid: "0000-0003-2392-7186"
+    email: "philippe.michel@ght-novo.fr"
+    role: "Statisticien"
+    affiliations:
+      name: "USRC - Hôpital NOVO"
+      city: Pontoise
+      department: "Unité de Soutien à la Recherche Clinique"
+title-block-banner: true
+format:
+  html:
+    embed-resources: true
+    theme: minty
+    code-fold: true
+    html-math-method: katex
+    highlight-style: ayu
+    page-layout: full
+    toc: true
+    number-sections: true
+    smooth-scroll: true
+    citation-hover: true
+bibliography: stat.bib
+csl: jama.csl
+license: "MIT"
+warning: false
+message: false
+cache: false
+
+---
+
+
+
+```{r}
+#| label: lib
+
+library(baseph)
+library(janitor)
+library(corrplot)
+library(tidyverse)
+library(lubridate)
+library(labelled)
+library(kableExtra)
+library(forestmodel)
+library(epiDisplay)
+library(confintr)
+library(colorspace)
+library(finalfit)
+library(DataExplorer)
+library(gtsummary)
+library(xlsx)
+library(readODS)
+library(survminer)
+#
+# En français
+#
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+theme_gtsummary_journal(journal = "jama")
+options(OutDec = ",")
+#
+# Export xls
+#
+expx = FALSE
+classeur <- "copredex-comp1.xls"
+if (expx){
+  zz <- paste("rm -f ", classeur)
+  system(zz)
+}
+```
+
+
+```{r}
+#| label: import
+
+dd <- read_delim("data/code_inclusion.csv", delim = ",")
+bnom <- dd$nom
+tt <- read_csv("data/demog.csv") |> 
+  clean_names() |> 
+  mutate_if(is.character, as.factor) 
+  var_label(tt) <- bnom
+#
+tt$siteid <- as.factor(tt$siteid)
+tt$inclimc <-  bmiph(tt$inclimc, lang ="eng") 
+var_label(tt$inclimc) <- "BMI"
+tt$symptdebdte <- dmy(tt$symptdebdte)
+tt$diagdte <- dmy(tt$diagdte)
+tt$incldte <- dmy(tt$incldte)
+tt$finetdte <- dmy(tt$finetdte)
+tt$oxygenaebdte <- dmy(tt$oxygenaebdte)
+tt$survie <- as.numeric(tt$finetdte-tt$incldte)
+#
+titre.demog <- bnom
+# 
+ttn <- tibble(tt$patid,tt$ttnom1)
+names(ttn) <- c("subjid", "traitement")
+```
+
+```{r}
+#| label: ittpp
+aa <- tt |> 
+dplyr::filter(tt$dcdon == "Oui")
+aa <- aa$patid
+pp <- read_csv("data/data2/exclus_pp.csv") |> 
+  mutate(ID = str_sub(ID,1,6),show_col_types = FALSE)
+pp <-   dplyr::filter(pp,!(pp$ID %in% aa))
+ttz <- tt |> 
+  dplyr::filter(!(tt$patid %in% pp$ID))
+#
+#| label: ittpp
+ppi <- read_csv("data/data2/exclus_itt.csv") |> 
+  mutate(ID = str_sub(ID,1,6),show_col_types = FALSE)
+ttitt <- tt |> 
+  dplyr::filter(!(tt$patid %in% ppi$ID))
+tt <- ttz
+```
+
+# Régression
+
+On recherche par un calcul en régression logistique si la survie (décédé à J28) est lié soit au traitement, soit à une donéne clinique. 
+
+```{r}
+#| label: tbl-reg1
+#| tbl-cap: Régression simple
+
+tt$inclimc <- tt$inclimc %>%
+  fct_relevel(
+    "Normal weight", "Underweight", "Overweight", "Obese"
+  )
+
+ll <- glm(dcdon ~ ttnom1 + sex   + inclhta+ inclimc + age, data = tt,family = binomial)
+
+tbl_regression(ll, 
+               exponentiate = TRUE,
+               estimate_fun = function(x) style_ratio(x, digits = 1)
+               ) |> 
+    modify_header(label ~ " ") |>
+    bold_labels() |> 
+    pexptabph(lg = FALSE, exp = FALSE, nomfich = "reg.xlsx", nomsheet = "reg1")
+
+```
+
+# Recherche de confusions
+
+On recherche des facteurs de confusion ou d'interaction entre les variables explicatives. 
+
+Aucun facteur de confusion n'est retrouvé. L'analse en régression est donc valide.
+
+## Âge & HTA
+
+```{r}
+#| label: tbl-conf_hta_age
+#| tbl-cap: Confusion Âge/HTA
+
+
+lld <- glm(dcdon ~ ttnom1 + sex   + age * inclhta+ inclimc, data = tt,family = binomial)
+
+tbl_regression(lld, 
+               exponentiate = TRUE,
+               estimate_fun = function(x) style_ratio(x, digits = 1)
+               ) |> 
+    modify_header(label ~ " ") |>
+    bold_labels() |> 
+    pexptabph(lg = FALSE, exp = FALSE, nomfich = "reg.xlsx", nomsheet = "reg2")
+```
+
+## Âge & sexe
+
+```{r}
+#| label: tbl-conf_age_sexe
+#| tbl-cap: Confusion Âge/sexe
+
+
+lld <- glm(dcdon ~ ttnom1 + sex * age + inclhta+ inclimc, data = tt,family = binomial)
+
+tbl_regression(lld, 
+               exponentiate = TRUE,
+               estimate_fun = function(x) style_ratio(x, digits = 1)
+               ) |> 
+    modify_header(label ~ " ") |>
+    bold_labels() |> 
+    pexptabph(lg = FALSE, exp = FALSE, nomfich = "reg.xlsx", nomsheet = "reg3")
+```
+
+## Âge & BMI
+
+```{r}
+#| label: tbl-conf_age_bmi
+#| tbl-cap: Confusion Âge/BMI
+
+
+lld <- glm(dcdon ~ ttnom1 + sex + age * inclimc+ inclhta, data = tt,family = binomial)
+
+tbl_regression(lld, 
+               exponentiate = TRUE,
+               estimate_fun = function(x) style_ratio(x, digits = 1)
+               ) |> 
+    modify_header(label ~ " ") |>
+    bold_labels() |> 
+    pexptabph(lg = FALSE, exp = FALSE, nomfich = "reg.xlsx", nomsheet = "reg4")
+```
+
+

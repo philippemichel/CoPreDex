@@ -7,6 +7,7 @@ author:
         name: "Hôpital NOVO"
         department: "Unité de Soutien à la Recherche Clinique"
 date: "30 mars 2023"
+lang: fr
 format: 
   titlepage-pdf:
     titlepage: bg-image
@@ -52,14 +53,13 @@ cite-method: biblatex
 csl: jama.csl
 #reference-location: margin
 #citation-location: margin
-license: "CC BY-SA"
+license: "MIT"
+echo: false
+warning: false
+message: false
+cache: false
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE) 
-expx = FALSE
-classeur <- "copredex-final2.xls"
-```
 
 ```{r}
 #| label: lib
@@ -80,8 +80,25 @@ library(DataExplorer)
 library(gtsummary)
 library(xlsx)
 library(survminer)
-```
+#
+# En français
+#
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+theme_gtsummary_journal(journal = "jama")
+options(OutDec = ",")
+#
+# Export xls
+#
+expx = FALSE
+classeur <- "copredex-comp1.xls"
+if (expx){
+  zz <- paste("rm -f ", classeur)
+  system(zz)
+}
+ggplot
 
+```
+ 
 ```{r}
 #| label: import
 
@@ -106,6 +123,16 @@ titre.demog <- bnom
 # 
 ttn <- tibble(tt$patid,tt$ttnom1)
 names(ttn) <- c("subjid", "traitement")
+#
+#----------
+#
+nvi <- read_delim("data/viste2.csv", delim = ";", show_col_types = FALSE)
+nvi <- names(nvi)
+vi2 <- read_delim("data/viste2.csv", delim = ";", show_col_types = FALSE) |> 
+  janitor::clean_names() |> 
+  mutate(rea = ifelse(reajnbre > 0, "Réanimation", "Pas de réanimation")) |> 
+  mutate_if(is.character, as.factor) |> 
+  right_join(ttn, by = "subjid")
 ```
 
 ```{r}
@@ -127,15 +154,26 @@ ttitt <- tt |>
 tt <- ttz
 ```
 
-## Généralité
+```{r}
+#| label: tbl-test
+#| tbl-cap: Test
+theme_gtsummary_journal(journal = "jama")
+tt |> 
+  dplyr::select(1:5) |>
+  tbl_summary(by = sex, missing = "no") 
+
+```
+
+
+## Généralité 
 
 Il s'agit d'une étude en non-infériorité comparant deux groupes. Pour ce type de design l'analyse est réalisée en per-protocole. Dans cet échantillon il n'y a pas eu de changement de bras pendant l'étude. La marge de non-infériorité considérée comme admissible a été fixée à 15 %.
 
-En raison du faible nombre de cas & en particulier du faible nombre de décès les tests prévus en non-infériorité n'ont pu être réalisés.
+En raison du faible nombre de cas & en particulier du faible nombre de décès les tests prévus en non-infériorité n'ont pu être réalisés. 
 
 ## Description de la population
 
-En analyse per-protocole, l'échantillon comprends `r nrow(tt)` cas pour `r ncol(tt)` variables au total.
+En analyse per-protocole, l'échantillon comprends `r nrow(tt)` cas  pour `r ncol(tt)` variables au total. 
 
 ```{r}
 #| label: desc1
@@ -151,6 +189,7 @@ tt |>
   pexptabph(lg = FALSE, exp = expx, nomfich = classeur, nomsheet = "descclin")
 
 ```
+
 
 ```{r}
 #| label: desc2
@@ -195,8 +234,24 @@ epiDisplay::pyramid(
 )
 ```
 
-## Critère principal
+## Âge, HTA, sexe & poids
 
+On receherche un facteur confondant possible de par les liens possibles entre ces trois variables.
+
+```{r}
+#| label: tbl-agesexe
+#| tbl-cap: "Âge poids & sexe"
+
+glm(sex ~ age + inclimc + inclhta, data = tt, family = "binomial") |> 
+  tbl_regression(exponentiate = TRUE) |> 
+  bold_p() |> 
+  bold_labels() |> 
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "agesexe")
+```
+ Il ne semble pas y avoir de lien entre le sexe les les deux autres variables. 
+
+
+## Critère principal
 **Évaluation de la mortalité à J28**
 
 ```{r}
@@ -213,11 +268,10 @@ tt |>
    pexptabph(exp = expx, nomfich = classeur, nomsheet = "survie1")
 ```
 
-Le test du $\chi^2$ de Dunnet & Gent n'est pas utilisable en raison des trop faibles effectifs. Aucun facteur correctif n’est validé pour ce test.
+Le test du $\chi^2$ de Dunnet & Gent n'est pas utilisable en raison des trop faibles effectifs. Aucun facteur correctif n’est validé pour ce test. 
 
 ### Risque relatif
-
-Le résultat est présenté ici en Risque relatif.
+Le résultat est présenté ici en Risque relatif. 
 
 ```{r}
 #| label: risquerelatif
@@ -245,20 +299,18 @@ ggsurvplot(fsurv, data = tt,
   risk.table = TRUE,        # Add risk table
   risk.table.col = "strata",
   xlim = c(0,28),
-  ylim = c(0.7,1),
+  ylim = c(0,1),
    break.time.by = 7,  
-  xlab = "Days", 
-  legend.title ="Treatment",
+  xlab = "jours",
   legend.labs =
-    c("Dexamethasone", "Prednisolone"),
-  ggtheme = theme_light()
-  
-  )
+    c("Dexaméthasone", "Prednisolone"),    # Change legend labels
+  ggtheme = theme_light() )
 ```
 
-Les effectifs sont trop faibles pour un test de Log-Rank afin de comparer les deux courbes.
+Les effectifs sont trop faibles pour un test de Log-Rank afin de comparer les deux courbes. 
 
 ### analyse en équivalence
+
 
 ```{r}
 #| label: itt1
@@ -267,7 +319,7 @@ Les effectifs sont trop faibles pour un test de Log-Rank afin de comparer les de
 zz <- fisher.test(ttitt$dcdon,ttitt$ttnom1)
 ```
 
-On réalise une analyse en équivalence en intention de traiter afin de valider l'analyse principale. Le test de fisher retrouve un p = `r beaup(zz$p.value)`.
+On réalise une analyse en équivalence  en intention de traiter afin de valider l'analyse principale. Le test de fisher retrouve un p = `r beaup(zz$p.value)`. 
 
 ```{r}
 #| label: itt2
@@ -275,6 +327,7 @@ On réalise une analyse en équivalence en intention de traiter afin de valider 
 
 cc(ttitt$dcdon,ttitt$ttnom1)
 ```
+
 
 ### Autres facteurs
 
@@ -326,6 +379,7 @@ tt |>
     )
 ```
 
+
 ### Analyse multivariée
 
 ```{r}
@@ -344,14 +398,15 @@ L'âge & le diabète de type 2 semblent être des facteurs pronostics de la COVI
 
 ## Critères secondaires
 
-### Jours d’oxygénothérapie
+### Jours d’oxygénothérapie & d'hospitalsation
 
 ```{r}
 #| label: o2import
-#| eval: false
 noo <- read_csv("data/oxyg.csv")
 noo <- names(noo)
-oo <- debutph("data/oxyg.csv",noo)
+oo <- read_delim("data/oxyg.csv",delim = ";", show_col_types = FALSE) |> 
+  mutate_if(is.character, as.factor) |>
+  janitor::clean_names()
 oo$pararespidte <- dmy(oo$pararespidte)
 oo <- right_join(oo, ttn, by = "subjid")
 #
@@ -366,7 +421,22 @@ zzp <- beaup(zz$p.value, affp=1)
 ```
 
 ```{r}
-#| eval: false
+#| label: fig-jhosp
+#| fig-cap: "Durée d'hospitalisation"
+
+zz <- t.test(vi2$hospijnbre~vi2$traitement, var.equal = TRUE)
+zz <- beaup(zz$p.value,affp = 1)
+vi2 |> 
+vioboxph(traitement,hospijnbre,
+  titre = "Durée d'hospitalisation",
+  stit = zz,
+  tity= "jours"
+)
+```
+
+
+
+```{r}
 #| label: figoo1
 #| fig-cap: "Durée d'oxygénothérapie selon le traitement suivi"
 oon |>
@@ -400,10 +470,9 @@ oon |>
     )
 ```
 
-
+Il n'y a pas de différence visible entre les deux groupes - `r zzp`.
 
 ```{r fagoto}
-#| eval: false
 oof <- oo |> 
     group_by(subjid) |> 
     mutate(njour = (pararespidte-min(pararespidte))) |> 
@@ -413,24 +482,29 @@ ooa <- oof |>
     pivot_wider(names_from = njour, values_from = ventil,values_fn = list)
 ```
 
+
 ### Transferts en réanimation
 
 ```{r}
 #| label: rea1
 #| tbl-cap: Séjour en réanimation selon le traitement
 
-nvi <- read_csv("data/viste2.csv")
+nvi <- read_delim("data/viste2.csv", delim = ";", show_col_types = FALSE)
 nvi <- names(nvi)
-vi2 <- debutph("data/viste2.csv", nvi)
-vi2 <- right_join(vi2, ttn, by = "subjid")
+vi2 <- read_delim("data/viste2.csv", delim = ";", show_col_types = FALSE) |> 
+  janitor::clean_names() |> 
+  mutate(rea = ifelse(reajnbre > 0, "Réanimation", "Pas de réanimation")) |> 
+  mutate_if(is.character, as.factor) |> 
+  right_join(ttn, by = "subjid")
 #
-vi2$rea <-
-    as.factor(ifelse(vi2$reajnbre > 0, "Réanimation", "Pas de réanimation"))
+
 
 vi2 |>
+    drop_na(rea) |>
     tbl_cross(
         traitement,
         rea,
+        digits = 0,
         percent = "row",
         label = list(traitement ~ "Traitement", rea ~ "Prise en charge")
     ) |>
@@ -451,42 +525,76 @@ barouiph(vi2,
          capt = "Séjour en réanimation selon le traitement")
 ```
 
+
 ### Évolution de la qualité de vie
 
-Le score EQ5D ne peut être utilisé car il est incomplet (il manque l'EVS). On utilise donc un score maison en prenant les 5 valeurs de l'EQ5D cotées chacunes de 1 à 3, 3 étant le plus grave.
+Le score EQ5D ne peut être utilisé car il est incomplet (il manque l'EVS). On utilise donc un score maison en prenant les 5 valeurs de l'EQ5D cotées chacunes de 1 à 3, 3 étant le plus grave. 
 
 ```{r}
-#| label: eq5d1
-#| fig-cap: "EQ5D bis début & fin d'étude"
-#| eval: true
-#| 
-neq <- read_delim("data/EQ5D.csv")
+#| label: eq5dpre
+
+neq <- read_csv("data/EQ5D.csv")
 neq <- names(neq)
-eq <- read.csv("data/EQ5D.csv", sep = ";") |> 
-  clean_names() |> 
-  mutate(visit = as.factor(visit))
+eq <- read_csv("data/EQ5D.csv") |> 
+  mutate_if(is.character, as.factor) |>
+  janitor::clean_names()
 eq <- right_join(eq, ttn, by = "subjid")
+#
+## Recodage de eq$visit
+eq$visit <- eq$visit %>%
+  fct_recode(
+    "Inclusion" = "INCLUSION",
+    "J 28" = "VISITE 2 (J28)"
+  )
 #
 eq$tot <- eq$e1 + eq$e2 + eq$e3 + eq$e4 + eq$e5
 leq <- length(na.omit(eq$tot))
 zz <- wilcox.test(eq$tot~eq$visit)
 zzp <- beaup(zz$p.value)
+```
+
+
+```{r}
+#| label: eq5d1
+#| fig-cap: "EQ5D bis début & fin d'étude"
+
+
+zz <- eq |> 
+ dplyr::filter(visit == "Inclusion")
+zz <- wilcox.test(tot~traitement, data = zz)
+zz1 <- beaup(zz$p.value,affp = 1)
+zz <- eq |> 
+ dplyr::filter(visit == "J 28")
+zz <- wilcox.test(tot~traitement, data = zz)
+zz2 <- beaup(zz$p.value,affp = 1)
 
 eq |>
     ggplot() +
-    aes(x = visit, y = tot, fill = visit) +
-    geom_violin() +
-    geom_boxplot(width = 0.15, fill = "grey90") +
+    aes(x = visit, y = tot, fill = traitement) +
+    geom_boxplot() +
+    geom_segment(x = 0.8 ,xend = 1.2, y  = 17, yend = 17, linewidth = 0.3) +
+  geom_segment(x = 0.8 ,xend = 0.8, y  = 17, yend = 16, linewidth = 0.3) +
+  geom_segment(x = 1.2 ,xend = 1.2, y  = 17, yend = 16, linewidth = 0.3) +
+  annotate("text",  x= 1, y = 18, label = zz1) +
+   geom_segment(x = 1.8 ,xend = 2.2, y  = 17, yend = 17, linewidth = 0.3) +
+  geom_segment(x = 1.8 ,xend = 1.8, y  = 17, yend = 16, linewidth = 0.3) +
+  geom_segment(x = 2.2 ,xend = 2.2, y  = 17, yend = 16, linewidth = 0.3) +
+  annotate("text",  x= 2, y = 18, label = zz2) +
+  geom_segment(x = 1, xend = 2, y  = 20, yend = 20,linewidth = 0.3) +
+  geom_segment(x = 1 ,xend = 1, y  = 19, yend = 20, linewidth = 0.3) +
+  geom_segment(x = 2 ,xend = 2, y  = 19, yend = 20, linewidth = 0.3) +
+  annotate("text", x= 1.5, y= 21, label = zzp) +
     labs(
         title = "EQ5D bis début & fin d'étude",
-        subtitle = "p < 0,001",
         x = "Visite",
         y = "EQ5D bis",
+        fill = "Traitement", 
         caption = "EQ5D bis début & fin d'étude",
         label = "eq1"
     ) +
     theme_light() +
       scale_fill_discrete_qualitative(palette = "Dynamic") +
+      scale_y_continuous(limits = c(0,21)) +
     theme(
         plot.title = element_text(size = 16, face = "bold"),
         plot.subtitle = element_text(size = 12),
@@ -499,10 +607,9 @@ eq |>
         ),
         axis.text.x = element_text(size = 12),
         axis.text.y = element_text(size = 12),
-        legend.position = "none"
+        legend.position = "right"
     )
 ```
-
 ### Rôle du traitement
 
 On étudie l'évolution du score entre J0 & J28 selon le traitement reçu.
@@ -510,21 +617,18 @@ On étudie l'évolution du score entre J0 & J28 selon le traitement reçu.
 ```{r}
 #| label: evoeq
 
-leq <- length(na.omit(eq$tot))
-zz <- wilcox.test(eq$tot~eq$visit)
-zzp <- beaup(zz$p.value)
-
 eqv <- eq[,c(1,2,13,14)]
 names(eqv) <- names(eq)[c(1,2,13,14)]
 eqv <- pivot_wider(eqv,names_from = visit,values_from =tot)
 names(eqv)[4] <- "visite2"
-eqv$dif <- eqv$visite2 - eqv$INCLUSION
+eqv$dif <- eqv$visite2 - eqv$Inclusion
 leqv <- length(na.omit(eqv$dif))
 zz <- wilcox.test(eqv$dif~eqv$traitement)
 zzp <- beaup(zz$p.value)
 ```
 
 le calcul porte sur `r leqv` patients. Il ne semble pas y avoir d'effet du traitement sur l'évolution du score (`r zzp`).
+
 
 ## Évènements & effets indésirables
 
@@ -571,7 +675,7 @@ ind$evolei <- ind$evolei %>%
 #| label: ein
 #| tbl-cap: Nombre d'EI selon le traitement
 
-ind |>
+ind |> 
   select(ttnom1) |>
   tbl_summary(missing = "no") |>
   modify_header(label ~ " ") |>
@@ -599,6 +703,7 @@ Il y a eu `r nrow(ind)` effets indésirables reportés concernant `r length(nind
 
 Il n'y pas de différence sur le nombre d'effets indésirables entre les deux traitements.
 
+
 ```{r}
 #| label: tabei
 #| tbl-cap: Évenements indésirables - Description
@@ -613,59 +718,56 @@ ind |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "ei1")
 ```
 
-Il y a un patient décédé dans le groupe"prednisolone" non pris en compte dans le critère principal car décédé après J28.
-
-# Satisfaction
-
-Questionnaire de satisfaction à J12
-
 ```{r}
-#| label: tbl-satisf
-#| tbl-cap: "Are you satisfied with the treatment ?"
+#| label: tbl-ei4
+#| tbl-cap: Évènements indésirables
 
-library("readODS")
-sat <- read_ods("data/VISIT1.ods", na = c("Nd", "NA","")) |> 
-  mutate_if(is.character, as.factor) |>
-    janitor::clean_names() |> 
-      select(subjid, satisf) |> 
-        mutate(satisf = factor(satisf, levels = c(levels(satisf), "Très insatisfait")))
-tts <- left_join(ttn,sat, by = join_by(subjid == subjid)) |> 
-  ## Recodage de tts$satisf en tts$satisf_rec
-mutate(satisf = fct_recode(satisf,
-    "dissatisfied" = "Insatisfait",
-    "Satisfied" = "Satisfait",
-    "Very satisfied" = "Très satisfait",
-    "Very dissatisfied" = "Très insatisfait"
-  )) |> 
- ## Réordonnancement de tts$satisf_rec
-mutate(satisf = fct_relevel(satisf,
-    "Very dissatisfied", "Satisfied", "dissatisfied", "Very satisfied"
-  ) )
-var_label(tts$satisf) <- "Are you satisfied with the treatment ?"
-
-tts |> 
-  dplyr::select(traitement,satisf) |>
-  tbl_summary(by = traitement, missing = "no") |>
-    modify_header(label ~ " ") |>
+ind |> 
+  filter(ei_nom %in% c("DEGRADATION HEMODYNAMIQUE" ,"DECOMPENSATION DIABETIQUE")) |> 
+  mutate(ei_nom = factor(ei_nom)) |> 
+  mutate(ei_nom = fct_infreq(ei_nom)) |> 
+#  mutate(ei_nom = fct_lump(ei_nom,5)) |> 
+  select(ei_nom,ttnom1) |> 
+  tbl_summary(by = ttnom1,missing = "no") |> 
+  modify_header(label ~ " ") |>
   bold_labels() |> 
   add_n() |> 
   add_p() |> 
-  Gexptabph(exp = expx, nomfich = classeur, nomsheet = "satisf")
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "ei4")
+
 ```
 
+```{r}
+#| label: tbl-ei5
+#| tbl-cap: Évènements indésirables - Évolution
+
+ind |> 
+  mutate(evolei = fct_infreq(evolei)) |> 
+  select(evolei,ttnom1) |> 
+  tbl_summary(by = ttnom1,missing = "no") |> 
+  modify_header(label ~ " ") |>
+  bold_labels() |> 
+  add_n() |> 
+  add_p() |> 
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "eievo")
+
+```
+
+Il y a un patient décédé dans le groupe"prednisolone" non pris en compte dans le critère principal car décédé après J28. 
 
 ## Technique {.appendix}
 
+
 Il s'agit d'une étude en non-infériorité comparant deux groupes. Pour ce type de design l'analyse est réalisée en per-protocole. Le critère principal a aussi été évalué en intention de traiter pour valider le résultat. Dans cet échantillon il n'y a pas eu de changement de bras pendant l'étude. La marge de non-infériorité considérée comme admissible a été fixée à 15 %.
 
-Les données discrètes ont été présentés en pourcentage puis comparées par un test exact de Fisher. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon.
+Les données discrètes ont été présentés en pourcentage puis comparées par un test exact de Fisher. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon. 
 
-L'analyse multivarié a été menée en régression logistique. Les conditions d'utilisation d'une loi binomiale (distribution normale des résidus) n'étant pas remplies une loi quasi-binomiale a été utilisée.
+L'analyse multivarié a été menée en régression logistique. Les conditions d'utilisation d'une loi binomiale (distribution normale des résidus) n'étant pas remplies une loi quasi-binomiale a été utilisée. 
 
-L'analyse de la survie à 28 jours aurai du être évaluée par un test du $\chi^2$ de Dunnet & Gent [@dunnett] en unilatéral mais qui n'a pu être réalisé en raison des faibles effectifs.
+L'analyse de la survie à 28 jours aurai du être évaluée par un test du $\chi^2$ de Dunnet & Gent [@dunnett] en unilatéral mais  qui n'a pu être réalisé en raison des faibles effectifs. 
 
 Les survie ont été calculées par la méthode de Kaplan-Meyer. Le test non-paramétrique du Log-rank en unilatéral n'a pu être réalisé en raison des faibles effectifs.
 
-Pour l'analyse multivariée, dans un premier temps on incorpore dans l'analyse multivariée tous les facteurs ayant une p-value \< 20 %. Ensuite on recherche le meilleur modèle par un step-by-step descendant.
+Pour l'analyse multivariée,  dans un premier temps on incorpore dans l'analyse multivariée tous les facteurs ayant une p-value < 20 %. Ensuite on recherche le meilleur modèle par un step-by-step descendant.
 
 L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy], `epiDisplay` [@epid] & `baseph` [@baseph].
